@@ -43,7 +43,7 @@ spec:
             privileged: true
           env:
             - name: PROVISIONER_NAME
-              value: custom-csi
+              value: custom.csi.driver
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: NODE_NAME

@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: custom-csi-controller
+  labels:
+    app.kubernetes.io/instance:: custom-csi
+    app.kubernetes.io/name: custom-csi
+    component: controller
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/instance:: custom-csi
+    app.kubernetes.io/name: custom-csi
+    component: controller
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: custom-csi-controller
+spec:
+  replicas: 1
+  serviceName: custom-csi-driver
+  selector:
+    matchLabels: 
+      app.kubernetes.io/instance:: custom-csi
+      app.kubernetes.io/name: custom-csi
+      component: controller
+  template:
+    metadata:
+      labels: 
+        app.kubernetes.io/instance:: custom-csi
+        app.kubernetes.io/name: custom-csi
+    spec:
+      serviceAccount: custom-csi-driver
+      priorityClassName: system-cluster-critical
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+      containers:
+        - name: csi-driver
+          image: "custom-csi:latest"
+          imagePullPolicy: IfNotPresent
+          args:
+            - csi-driver
+            - --disable-metrics
+          env:
+            - name: PROVISIONER_NAME
+              value: "custom.csi.driver"
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          ports:
+            - name: csi-probe
+              containerPort: 9808
+          resources:
+            limits:
+              cpu: "1"
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 100Mi
+        - name: external-resizer
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.2.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--handle-volume-inuse-error=false"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
