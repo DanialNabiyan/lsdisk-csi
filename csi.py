@@ -9,9 +9,10 @@ def serve():
     csi_pb2_grpc.add_ControllerServicer_to_server(ControllerService(), server)
     csi_pb2_grpc.add_NodeServicer_to_server(NodeService(), server)
     
-    server.add_insecure_port(f"0.0.0.0:5000")
+    server.add_insecure_port(f"unix:///csi/csi.sock")  # Use a Unix socket at /csi/csi.sock
     server.start()
-    print("CSI Driver listening on 0.0.0.0:5000")
+    print("CSI Driver listening on unix:///csi/csi.sock")
     server.wait_for_termination()
+    
 if __name__ == "__main__":
     serve()
