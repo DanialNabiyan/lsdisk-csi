@@ -46,7 +46,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: lsdisk-driver
-    namespace: {{ .Release.Namespace }}
+    namespace: kube-system
 roleRef:
   kind: ClusterRole
   name: lsdisk-provisioner
@@ -71,7 +71,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: lsdisk-driver
-    namespace: {{ .Release.Namespace }}
+    namespace: kube-system
 roleRef:
   kind: ClusterRole
   name: lsdisk-broker
@@ -108,7 +108,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: lsdisk-driver
-    namespace: {{ .Release.Namespace }}
+    namespace: kube-system
 roleRef:
   kind: ClusterRole
   name: lsdisk-resizer
