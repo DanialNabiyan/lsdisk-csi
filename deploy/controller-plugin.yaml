@@ -31,6 +31,7 @@ spec:
       labels: 
         app.kubernetes.io/instance: lsdisk
         app.kubernetes.io/name: lsdisk
+        component: controller
     spec:
       serviceAccount: lsdisk-driver
       priorityClassName: system-cluster-critical
@@ -46,9 +47,6 @@ spec:
         - name: csi-driver
           image: "lsdisk:latest"
           imagePullPolicy: IfNotPresent
-          args:
-            - csi-driver
-            - --disable-metrics
           env:
             - name: PROVISIONER_NAME
               value: "lsdisk.driver"
