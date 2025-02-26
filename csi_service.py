@@ -17,12 +17,12 @@ class IdentityService(csi_pb2_grpc.IdentityServicer):
         return csi_pb2.GetPluginCapabilitiesResponse(
             capabilities=[
                 csi_pb2.PluginCapability(
-                    sservice=csi_pb2.PluginCapability.Service(
+                    service=csi_pb2.PluginCapability.Service(
                         type=csi_pb2.PluginCapability.Service.CONTROLLER_SERVICE
                     )
                 ),
                 csi_pb2.PluginCapability(
-                    sservice=csi_pb2.PluginCapability.Service(
+                    service=csi_pb2.PluginCapability.Service(
                         type=csi_pb2.PluginCapability.Service.VOLUME_ACCESSIBILITY_CONSTRAINTS
                     )
                 ),
