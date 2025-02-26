@@ -3,13 +3,13 @@ kind: Service
 metadata:
   name: lsdisk-controller
   labels:
-    app.kubernetes.io/instance:: lsdisk
+    app.kubernetes.io/instance: lsdisk
     app.kubernetes.io/name: lsdisk
     component: controller
 spec:
   type: ClusterIP
   selector:
-    app.kubernetes.io/instance:: lsdisk
+    app.kubernetes.io/instance: lsdisk
     app.kubernetes.io/name: lsdisk
     component: controller
   clusterIP: None
@@ -23,13 +23,13 @@ spec:
   serviceName: lsdisk-driver
   selector:
     matchLabels: 
-      app.kubernetes.io/instance:: lsdisk
+      app.kubernetes.io/instance: lsdisk
       app.kubernetes.io/name: lsdisk
       component: controller
   template:
     metadata:
       labels: 
-        app.kubernetes.io/instance:: lsdisk
+        app.kubernetes.io/instance: lsdisk
         app.kubernetes.io/name: lsdisk
     spec:
       serviceAccount: lsdisk-driver
