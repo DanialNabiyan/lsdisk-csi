@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: custom-csi-node
+  name: lsdisk-node
 spec:
   updateStrategy:
     rollingUpdate:
       maxUnavailable: "100%"
   selector:
     matchLabels: 
-      app.kubernetes.io/instance:: custom-csi
-      app.kubernetes.io/name: custom-csi
+      app.kubernetes.io/instance:: lsdisk
+      app.kubernetes.io/name: lsdisk
       component: node
   template:
     metadata:
       labels: 
-        app.kubernetes.io/instance:: custom-csi
-        app.kubernetes.io/name: custom-csi
+        app.kubernetes.io/instance:: lsdisk
+        app.kubernetes.io/name: lsdisk
         component: node
     spec:
-      serviceAccount: custom-csi-driver
+      serviceAccount: lsdisk-driver
       priorityClassName: system-node-critical
       tolerations:
         - operator: "Exists"
@@ -29,7 +29,7 @@ spec:
             type: Directory
         - name: socket-dir
           hostPath:
-            path: /var/lib/kubelet/plugins/custom-csi
+            path: /var/lib/kubelet/plugins/lsdisk
             type: DirectoryOrCreate
         - name: mountpoint-dir
           hostPath:
@@ -37,13 +37,13 @@ spec:
             type: DirectoryOrCreate
       containers:
         - name: csi-driver
-          image: custom-csi:latest
+          image: lsdisk:latest
           imagePullPolicy: imagePullPolicy
           securityContext:
             privileged: true
           env:
             - name: PROVISIONER_NAME
-              value: custom.csi.driver
+              value: lsdisk.driver
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: NODE_NAME

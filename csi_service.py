@@ -9,7 +9,7 @@ from pathlib import Path
 class IdentityService(csi_pb2_grpc.IdentityServicer):
     def GetPluginInfo(self, request, context):
         return csi_pb2.GetPluginInfoResponse(
-            name="custom.csi.driver",
+            name="lsdisk.driver",
             vendor_version="1.0.0"
         )
 
