@@ -5,7 +5,9 @@ from google.protobuf.wrappers_pb2 import BoolValue
 from csi_utils import find_disk,create_img,mount_device,umount_device,expand_img,attach_loop,detach_loops
 from utils import get_storageclass_from_pv,get_storageclass_storagemodel_param,get_node_name,create_symlink,be_absent,run
 from pathlib import Path
-    
+
+NODE_NAME_TOPOLOGY_KEY = "hostname"
+
 class IdentityService(csi_pb2_grpc.IdentityServicer):
     def GetPluginInfo(self, request, context):
         return csi_pb2.GetPluginInfoResponse(
@@ -43,6 +45,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
     
     def CreateVolume(self, request, context):
         volume_capability = request.volume_capabilities[0]
+        node_name = request.accessibility_requirements.preferred[0].segments[
+                NODE_NAME_TOPOLOGY_KEY
+            ]
         AccessModeEnum = csi_pb2.VolumeCapability.AccessMode.Mode
         if volume_capability.access_mode.mode not in [
             AccessModeEnum.SINGLE_NODE_WRITER
@@ -60,7 +65,10 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         
         volume = csi_pb2.Volume(
             volume_id=request.name,
-            capacity_bytes=request.capacity_range.required_bytes
+            capacity_bytes=request.capacity_range.required_bytes,
+            accessible_topology=[
+                    csi_pb2.Topology(segments={NODE_NAME_TOPOLOGY_KEY: node_name})
+                ]
         )
         return csi_pb2.CreateVolumeResponse(volume=volume)
 
@@ -93,9 +101,15 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         )
 
 class NodeService(csi_pb2_grpc.NodeServicer):
+    def __init__(self, node_name):
+        self.node_name = node_name
+    
     def NodeGetInfo(self, request, context):
         return csi_pb2.NodeGetInfoResponse(
-            node_id=get_node_name()
+            node_id=get_node_name(),
+            accessible_topology=csi_pb2.Topology(
+                segments={NODE_NAME_TOPOLOGY_KEY: self.node_name}
+            )
         )
     def NodeStageVolume(self, request, context):
         img_file = Path(f"/mnt/{request.volume_id}/disk.img")
