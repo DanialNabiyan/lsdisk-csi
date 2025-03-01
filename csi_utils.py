@@ -4,6 +4,7 @@ from utils import checkoutput,run,run_out
 def find_disk(storage_model):
     node_name = os.getenv("NODE_NAME", "unknown-node")
     output = checkoutput("lsblk -o MODEL,NAME -d")
+    print(output)
     lines = output.strip().split("\n")[1:]
     result = {}
     for line in lines:
@@ -11,6 +12,7 @@ def find_disk(storage_model):
         model = parts[0]
         device_name = parts[1] if len(parts) > 1 else ""
         result[model] = device_name
+        print(device_name)
     return result.get(storage_model, ""),node_name
 
 def create_img(volume_id,size):
