@@ -45,7 +45,7 @@ spec:
           emptyDir: {}
       containers:
         - name: csi-driver
-          image: "lsdisk:latest"
+          image: danialnabiyan1382/lsdisk:v1.0.0.10
           imagePullPolicy: IfNotPresent
           env:
             - name: PROVISIONER_NAME
