@@ -24,9 +24,12 @@ def create_img(volume_id,size):
         return
     run(f"truncate -s {size} {img_file}")
     run(f"mkfs.ext4 {img_file}")
+    print(f"image file exist: {img_file.exists()}")
     
 def mount_device(device_name):
+    print(device_name)
     device_path = Path(f"/dev/{device_name}")
+    print(f"is device name exist: {device_path.exists()}")
     if device_path.exists():
         run(f"mount {device_path} /mnt")
     else:
