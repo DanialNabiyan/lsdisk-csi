@@ -29,8 +29,8 @@ def create_img(volume_id,size):
 def mount_device(device_name):
     print(device_name)
     device_path = Path(f"/dev/{device_name}")
-    print(f"is device name exist: {device_path.exists()}")
-    if device_path.exists():
+    print(f"is device name exist: {device_path.is_file()()}")
+    if device_path.is_file():
         run(f"mount {device_path} /mnt")
     else:
         return
