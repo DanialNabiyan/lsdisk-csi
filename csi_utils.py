@@ -4,7 +4,6 @@ from utils import checkoutput,run,run_out
 def find_disk(storage_model):
     node_name = os.getenv("NODE_NAME", "unknown-node")
     output = checkoutput("lsblk -o MODEL,NAME -d")
-    print(output)
     lines = output.strip().split("\n")[1:]
     result = {}
     for line in lines:

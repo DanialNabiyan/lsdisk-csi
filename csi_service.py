@@ -61,6 +61,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         print(f"storagemodel is {storage_model}")
         device_name = find_disk(storage_model)
         print(f"device name is {device_name}")
+        print(f"node name: {node_name}")
         mount_device(device_name)
         create_img(volume_id=request.name,size=request.capacity_range.required_bytes)
         umount_device(device_name)
