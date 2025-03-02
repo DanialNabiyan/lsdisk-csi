@@ -11,7 +11,7 @@ def find_disk(storage_model):
         model = parts[0]
         device_name = parts[1] if len(parts) > 1 else ""
         result[model] = device_name
-        print(device_name)
+    print(result.get(storage_model, ""))
     return result.get(storage_model, ""),node_name
 
 def create_img(volume_id,size):
@@ -20,16 +20,16 @@ def create_img(volume_id,size):
         return
     img_dir.mkdir()
     img_file = Path(f"/mnt/{volume_id}/disk.img")
-    if img_file.exists():
+    if img_file.is_file():
         return
     run(f"truncate -s {size} {img_file}")
     run(f"mkfs.ext4 {img_file}")
-    print(f"image file exist: {img_file.exists()}")
+    print(f"image file exist: {img_file.is_file()}")
     
 def mount_device(device_name):
     print(device_name)
     device_path = Path(f"/dev/{device_name}")
-    print(f"is device name exist: {device_path.is_file()()}")
+    print(f"is device name exist: {device_path.is_file()}")
     if device_path.is_file():
         run(f"mount {device_path} /mnt")
     else:
