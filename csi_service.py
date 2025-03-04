@@ -64,7 +64,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         print(f"node name: {node_name}")
         mount_device(device_name)
         create_img(volume_id=request.name,size=request.capacity_range.required_bytes)
-        umount_device(device_name)
+        #umount_device(device_name)
         
         volume = csi_pb2.Volume(
             volume_id=request.name,
