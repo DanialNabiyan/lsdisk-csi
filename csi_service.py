@@ -115,9 +115,12 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             )
         )
     def NodeStageVolume(self, request, context):
+        print("NodeStageVolume **********************")
         img_file = Path(f"/mnt/{request.volume_id}/disk.img")
         loop_file = attach_loop(img_file)
+        print(f"loop_file: {loop_file}")
         staging_path = request.staging_target_path
+        print(f"staging_path: {staging_path}")
         staging_dev_path = Path(f"{staging_path}/dev")
         create_symlink(path=staging_dev_path, to=loop_file)
         return csi_pb2.NodeStageVolumeResponse()
@@ -131,8 +134,11 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         return csi_pb2.NodeUnstageVolumeResponse()
 
     def NodePublishVolume(self, request, context):
+        print("NodePublishVolume***************")
         target_path = request.target_path
+        print(f"target_path: {target_path}")
         staging_path = request.staging_target_path
+        print(f"staging_path: {staging_path}")
         staging_dev_path = Path(f"{staging_path}/dev")
         create_symlink(path=target_path,to=staging_dev_path)
         return csi_pb2.NodePublishVolumeResponse()
