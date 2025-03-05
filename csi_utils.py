@@ -30,7 +30,9 @@ def mount_device(src,dest):
     src = Path(src)
     dest = Path(dest)
     if src.exists():
+        print(src)
         if dest.exists():
+            print(dest)
             run(f"mount {src} {dest}")
     else:
         return
