@@ -29,20 +29,18 @@ def create_img(volume_id,size):
 def mount_device(src,dest):
     src = Path(src)
     dest = Path(dest)
-    print(src)
-    print(dest)
-    print(src.exists())
-    print(dest.exists())
     if src.exists():
-        print(src)
         if dest.exists():
-            print(dest)
             run(f"mount {src} {dest}")
     else:
         return
 def mount_bind(src,dest):
     src = Path(src)
     dest = Path(dest)
+    print(src)
+    print(dest)
+    print(src.exists())
+    print(dest.exists())
     if src.exists():
         if dest.exists():
             run(f"mount --bind {src} {dest}")
