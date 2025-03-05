@@ -2,7 +2,7 @@ import grpc
 import csi_pb2_grpc
 import csi_pb2 
 from google.protobuf.wrappers_pb2 import BoolValue  
-from csi_utils import find_disk,create_img,mount_device,umount_device,expand_img,attach_loop,detach_loops
+from csi_utils import find_disk,create_img,mount_device,umount_device,expand_img,attach_loop,detach_loops,mount_bind
 from utils import get_storageclass_from_pv,get_storageclass_storagemodel_param,get_node_name,create_symlink,be_absent,run
 from pathlib import Path
 
@@ -62,7 +62,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         device_name = find_disk(storage_model)
         print(f"device name is {device_name}")
         print(f"node name: {node_name}")
-        mount_device(device_name)
+        mount_device(src=device_name,dest="/mnt")
         create_img(volume_id=request.name,size=request.capacity_range.required_bytes)
         umount_device(device_name)
         
@@ -82,7 +82,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storageclass = get_storageclass_from_pv(pvname=request.volume_id)
         storagemodel = get_storageclass_storagemodel_param(storageclass_name=storageclass)
         device_name = find_disk(storage_model=storagemodel)
-        mount_device(device_name)
+        mount_device(src=device_name,dest="/mnt")
         expand_img(volume_id=request.volume_id,size=request.capacity_range.required_bytes)
         umount_device(device_name)
         return csi_pb2.ControllerExpandVolumeResponse(capacity_bytes=request.capacity_bytes)
@@ -121,8 +121,9 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         print(f"loop_file: {loop_file}")
         staging_path = request.staging_target_path
         print(f"staging_path: {staging_path}")
-        staging_dev_path = Path(f"{staging_path}/dev")
-        create_symlink(path=staging_dev_path, to=loop_file)
+        #staging_dev_path = Path(f"{staging_path}/dev")
+        #create_symlink(path=staging_dev_path, to=loop_file)
+        mount_device(src=loop_file,dest=staging_path)
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
@@ -139,8 +140,9 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         print(f"target_path: {target_path}")
         staging_path = request.staging_target_path
         print(f"staging_path: {staging_path}")
-        staging_dev_path = Path(f"{staging_path}/dev")
-        create_symlink(path=target_path,to=staging_dev_path)
+        #staging_dev_path = Path(f"{staging_path}/dev")
+        #create_symlink(path=target_path,to=staging_dev_path)
+        mount_bind(src=staging_path,dest=target_path)
         return csi_pb2.NodePublishVolumeResponse()
 
     def NodeUnpublishVolume(self, request, context):
