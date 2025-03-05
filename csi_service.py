@@ -62,7 +62,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         device_name = find_disk(storage_model)
         print(f"device name is {device_name}")
         print(f"node name: {node_name}")
-        mount_device(src=device_name,dest="/mnt")
+        mount_device(src=device_name[0],dest="/mnt")
         create_img(volume_id=request.name,size=request.capacity_range.required_bytes)
         umount_device(device_name)
         
@@ -82,7 +82,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storageclass = get_storageclass_from_pv(pvname=request.volume_id)
         storagemodel = get_storageclass_storagemodel_param(storageclass_name=storageclass)
         device_name = find_disk(storage_model=storagemodel)
-        mount_device(src=device_name,dest="/mnt")
+        mount_device(src=device_name[0],dest="/mnt")
         expand_img(volume_id=request.volume_id,size=request.capacity_range.required_bytes)
         umount_device(device_name)
         return csi_pb2.ControllerExpandVolumeResponse(capacity_bytes=request.capacity_bytes)
