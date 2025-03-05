@@ -37,13 +37,9 @@ def mount_device(src,dest):
 def mount_bind(src,dest):
     src = Path(src)
     dest = Path(dest)
-    print(src)
-    print(dest)
-    print(src.exists())
-    print(dest.exists())
     if src.exists():
-        if dest.exists():
-            run(f"mount --bind {src} {dest}")
+        dest.mkdir(parents=True, exist_ok=True)
+        run(f"mount --bind {src} {dest}")
     else:
         return
 def umount_device(device_name):
