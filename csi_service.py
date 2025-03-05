@@ -121,16 +121,14 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         print(f"loop_file: {loop_file}")
         staging_path = request.staging_target_path
         print(f"staging_path: {staging_path}")
-        #staging_dev_path = Path(f"{staging_path}/dev")
-        #create_symlink(path=staging_dev_path, to=loop_file)
         mount_device(src=loop_file,dest=staging_path)
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
         img_file = Path(f"/mnt/{request.volume_id}/disk.img")
         staging_path = request.staging_target_path
-        staging_dev_path = Path(f"{staging_path}/dev")
-        be_absent(staging_dev_path)
+        umount_device(staging_path)
+        be_absent(staging_path)
         detach_loops(img_file)
         return csi_pb2.NodeUnstageVolumeResponse()
 
@@ -140,13 +138,12 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         print(f"target_path: {target_path}")
         staging_path = request.staging_target_path
         print(f"staging_path: {staging_path}")
-        #staging_dev_path = Path(f"{staging_path}/dev")
-        #create_symlink(path=target_path,to=staging_dev_path)
-        mount_bind(src=staging_path,dest=target_path)
+        mount_bind(src=target_path,dest=staging_path)
         return csi_pb2.NodePublishVolumeResponse()
 
     def NodeUnpublishVolume(self, request, context):
         target_path = request.target_path
+        umount_device(target_path)
         be_absent(path=target_path)
         return csi_pb2.NodeUnpublishVolumeResponse()
     
