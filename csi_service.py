@@ -138,7 +138,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         print(f"target_path: {target_path}")
         staging_path = request.staging_target_path
         print(f"staging_path: {staging_path}")
-        mount_bind(src=target_path,dest=staging_path)
+        mount_bind(src=staging_path,dest=target_path)
         return csi_pb2.NodePublishVolumeResponse()
 
     def NodeUnpublishVolume(self, request, context):
