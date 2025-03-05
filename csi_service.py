@@ -60,7 +60,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storage_model = parameters.get("storagemodel", "")
         print(f"storagemodel is {storage_model}")
         device_name = find_disk(storage_model)
-        print(f"device name is {device_name}")
+        print(f"device name is {device_name[0]}")
         print(f"node name: {node_name}")
         mount_device(src=device_name[0],dest="/mnt")
         create_img(volume_id=request.name,size=request.capacity_range.required_bytes)
@@ -134,7 +134,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
 
     def NodePublishVolume(self, request, context):
         print("NodePublishVolume***************")
-        target_path = request.target_path
+        target_path = request.target_pathku 
         print(f"target_path: {target_path}")
         staging_path = request.staging_target_path
         print(f"staging_path: {staging_path}")
