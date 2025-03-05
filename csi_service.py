@@ -134,7 +134,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
 
     def NodePublishVolume(self, request, context):
         print("NodePublishVolume***************")
-        target_path = request.target_pathku 
+        target_path = request.target_path
         print(f"target_path: {target_path}")
         staging_path = request.staging_target_path
         print(f"staging_path: {staging_path}")
