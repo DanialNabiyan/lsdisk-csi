@@ -30,7 +30,56 @@ def check_node_name(node):
         return True
     else:
         return False
+    
+def run_daemonset(daemonset_name,selector,container_name,image,storagemodel):
+    config.load_incluster_config()
+    api_instance = client.AppsV1Api()
+    daemonset_manifest = {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {"name": f"{daemonset_name}"},
+        "spec": {
+            "selector": {"matchLabels": {"app": f"{selector}"}},
+            "template": {
+                "metadata": {"labels": {"app": f"{selector}"}},
+                "spec": {
+                    "containers": [
+                        {
+                            "name": f"{container_name}",
+                            "image": f"{image}",
+                            "env": [
+                                {
+                                    "name": "storagemodel",
+                                    "value": f"{storagemodel}"
+                                },
+                                {
+                                    "name": "NODE_NAME",
+                                    "valueFrom": {
+                                        "fieldRef": {
+                                            "apiVersion": "v1",
+                                            "fieldPath": "spec.nodeName"
+                                        }
+                                    }
+                                }
+                            ],
+                        }
+                    ]
+                },
+            },
+        },
+    }
+    api_instance.create_namespaced_daemon_set(namespace="default", body=daemonset_manifest)
+    print("DaemonSet created!")
+    
+def list_pod_by_selector(selector):
+    v1 = client.CoreV1Api()
+    pods = v1.list_namespaced_pod(namespace="default", label_selector=selector)
+    return pods
 
+def get_log_by_podname(pod):
+    v1 = client.CoreV1Api()
+    return v1.read_namespaced_pod_log(name=pod, namespace="default")
+    
 def get_storageclass_storagemodel_param(storageclass_name):
     api_instance = client.StorageV1Api()
     storage_class = api_instance.read_storage_class(storageclass_name)
