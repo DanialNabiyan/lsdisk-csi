@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from utils import checkoutput,run,run_out
 def find_disk(storage_model):
-    node_name = os.getenv("NODE_NAME", "unknown-node")
     output = checkoutput("lsblk -o MODEL,NAME -d")
     lines = output.strip().split("\n")[1:]
     result = {}
@@ -11,8 +10,7 @@ def find_disk(storage_model):
         model = parts[0]
         device_name = parts[1] if len(parts) > 1 else ""
         result[model] = device_name
-    print(result.get(storage_model, ""))
-    return result.get(storage_model, ""),node_name
+    return result.get(storage_model, "")
 
 def create_img(volume_id,size):
     img_dir = Path(f"/mnt/{volume_id}")
