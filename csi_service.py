@@ -1,9 +1,12 @@
+import json
+import random
 import grpc
 import csi_pb2_grpc
 import csi_pb2 
 from google.protobuf.wrappers_pb2 import BoolValue  
 from csi_utils import find_disk,create_img,mount_device,umount_device,expand_img,attach_loop,detach_loops,mount_bind
-from utils import get_storageclass_from_pv,get_storageclass_storagemodel_param,get_node_name,create_symlink,be_absent,run
+from utils import get_storageclass_from_pv,get_storageclass_storagemodel_param,get_node_name,\
+    be_absent,run,run_daemonset,list_pod_by_selector,get_log_by_podname,delete_daemonset,run_pod,wait_for_pod_Succeeded,delete_pod
 from pathlib import Path
 
 NODE_NAME_TOPOLOGY_KEY = "hostname"
@@ -45,9 +48,6 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
     
     def CreateVolume(self, request, context):
         volume_capability = request.volume_capabilities[0]
-        node_name = request.accessibility_requirements.preferred[0].segments[
-                NODE_NAME_TOPOLOGY_KEY
-            ]
         AccessModeEnum = csi_pb2.VolumeCapability.AccessMode.Mode
         if volume_capability.access_mode.mode not in [
             AccessModeEnum.SINGLE_NODE_WRITER
@@ -59,18 +59,32 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         parameters = request.parameters
         storage_model = parameters.get("storagemodel", "")
         print(f"storagemodel is {storage_model}")
-        device_name = find_disk(storage_model)
-        print(f"device name is {device_name}")
-        print(f"node name: {node_name}")
-        mount_device(src=f"/dev/{device_name}",dest="/mnt")
-        create_img(volume_id=request.name,size=request.capacity_range.required_bytes)
-        umount_device(device_name)
-        
+        run_daemonset(daemonset_name="find-disk",selector="disk",container_name="find-disk",image="danialnabiyan1382/find-disk:v1.0.0.4",storagemodel=storage_model)
+        pods = list_pod_by_selector(selector="app=disk")
+        pods_log={}
+        for pod in pods.items:
+            pod_name = pod.metadata.name
+            log = get_log_by_podname(pod=pod_name)
+            if log != "":
+                log = log.replace("'", '"')
+                log = json.loads(log.strip())
+                node = log.get("node", "unknown")
+                disk = log.get("disk", "unknown")
+                pods_log[pod_name]= {"node": node, "disk": disk}
+        node_detail = random.choice(list(pods_log.values()))
+        delete_daemonset(daemonset_name="find-disk") 
+        run_pod(pod_name="create_image",container_name="create_image",node_name=node_detail["node"],
+                image="danialnabiyan1382/find-disk:v1.0.0.12",command="/app/create_img.py",disk_path=node_detail["disk"],size=request.capacity_range.required_bytes,
+                volume_name=request.name)
+        is_succeeded = wait_for_pod_Succeeded(pod_name="create_image")
+        if is_succeeded == True:
+            delete_pod(od_name="create_image")
+            
         volume = csi_pb2.Volume(
             volume_id=request.name,
             capacity_bytes=request.capacity_range.required_bytes,
             accessible_topology=[
-                    csi_pb2.Topology(segments={NODE_NAME_TOPOLOGY_KEY: node_name})
+                    csi_pb2.Topology(segments={NODE_NAME_TOPOLOGY_KEY: node_detail["node"]})
                 ]
         )
         return csi_pb2.CreateVolumeResponse(volume=volume)
