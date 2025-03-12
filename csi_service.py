@@ -59,7 +59,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         parameters = request.parameters
         storage_model = parameters.get("storagemodel", "")
         print(f"storagemodel is {storage_model}")
-        run_daemonset(daemonset_name=request.name,selector="disk",container_name=request.name,image="danialnabiyan1382/find-disk:v1.0.0.12",storagemodel=storage_model)
+        run_daemonset(daemonset_name=request.name,selector="disk",container_name=request.name,image="danialnabiyan1382/find-disk:v1.0.0.13",storagemodel=storage_model)
         pods = list_pod_by_selector(selector="app=disk")
         pods_log={}
         for pod in pods.items:
@@ -79,7 +79,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             "volume": request.name
         }
         run_pod(pod_name=request.name,container_name=request.name,node_name=node_detail["node"],
-                image="danialnabiyan1382/find-disk:v1.0.0.12",command="/app/create_img.py",env=pod_env)
+                image="danialnabiyan1382/find-disk:v1.0.0.13",command="/app/create_img.py",env=pod_env)
         is_succeeded = wait_for_pod_Succeeded(pod_name=request.name)
         if is_succeeded == True:
             delete_pod(pod_name=request.name)
@@ -134,20 +134,21 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         )
     def NodeStageVolume(self, request, context):
         print("NodeStageVolume **********************")
-        img_file = Path(f"/mnt/{request.volume_id}/disk.img")
-        loop_file = attach_loop(img_file)
-        print(f"loop_file: {loop_file}")
-        staging_path = request.staging_target_path
-        print(f"staging_path: {staging_path}")
-        mount_device(src=loop_file,dest=staging_path)
+        env = {
+            "volume": request.volume_id,
+            "staging_target_path": request.staging_target_path
+        }
+        run_pod(pod_name=request.volume_id,command=request.volume_id,node_name=self.node_name,
+                image="danialnabiyan1382/find-disk:v1.0.0.13",command="/app/node_stage.py",env=env)
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
-        img_file = Path(f"/mnt/{request.volume_id}/disk.img")
-        staging_path = request.staging_target_path
-        umount_device(staging_path)
-        be_absent(staging_path)
-        detach_loops(img_file)
+        env = {
+            "volume":request.volume_id,
+            "staging_target_path": request.staging_target_path
+        }
+        run_pod(pod_name=request.volume_id,command=request.volume_id,node_name=self.node_name,
+                image="danialnabiyan1382/find-disk:v1.0.0.13",command="/app/node_unstage.py",env=env)
         return csi_pb2.NodeUnstageVolumeResponse()
 
     def NodePublishVolume(self, request, context):
