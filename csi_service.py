@@ -78,7 +78,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
                 volume_name=request.name)
         is_succeeded = wait_for_pod_Succeeded(pod_name=request.name)
         if is_succeeded == True:
-            delete_pod(od_name=request.name)
+            delete_pod(pod_name=request.name)
             
         volume = csi_pb2.Volume(
             volume_id=request.name,
