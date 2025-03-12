@@ -140,6 +140,9 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         }
         run_pod(pod_name=request.volume_id,container_name=request.volume_id,node_name=self.node_name,
                 image="danialnabiyan1382/find-disk:v1.0.0.13",command="/app/node_stage.py",env=env)
+        is_succeeded = wait_for_pod_Succeeded(pod_name=request.name)
+        if is_succeeded == True:
+            delete_pod(pod_name=request.name)
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
@@ -149,6 +152,9 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         }
         run_pod(pod_name=request.volume_id,container_name=request.volume_id,node_name=self.node_name,
                 image="danialnabiyan1382/find-disk:v1.0.0.13",command="/app/node_unstage.py",env=env)
+        is_succeeded = wait_for_pod_Succeeded(pod_name=request.name)
+        if is_succeeded == True:
+            delete_pod(pod_name=request.name)
         return csi_pb2.NodeUnstageVolumeResponse()
 
     def NodePublishVolume(self, request, context):
