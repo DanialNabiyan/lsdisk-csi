@@ -41,6 +41,8 @@ def run_daemonset(daemonset_name,selector,container_name,image,storagemodel):
             "template": {
                 "metadata": {"labels": {"app": selector}},
                 "spec": {
+                    "terminationGracePeriodSeconds": 0,
+                    "restartPolicy": "Never",
                     "containers": [
                         {
                             "name": container_name,
@@ -106,6 +108,8 @@ def run_pod(pod_name,container_name,node_name,image,command,disk_path,size,volum
         "kind": "Pod",
         "metadata": {"name": pod_name},
         "spec": {
+            "terminationGracePeriodSeconds": 0,
+            "restartPolicy": "Never",
             "nodeName": node_name,
             "containers": [
                 {
