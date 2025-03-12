@@ -72,10 +72,14 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
                 disk = log.get("disk", "unknown")
                 pods_log[pod_name]= {"node": node, "disk": disk}
         node_detail = random.choice(list(pods_log.values()))
-        delete_daemonset(daemonset_name=request.name) 
+        delete_daemonset(daemonset_name=request.name)
+        pod_env = {
+            "disk": node_detail["disk"],
+            "size": request.capacity_range.required_bytes,
+            "volume": request.name
+        }
         run_pod(pod_name=request.name,container_name=request.name,node_name=node_detail["node"],
-                image="danialnabiyan1382/find-disk:v1.0.0.12",command="/app/create_img.py",disk_path=node_detail["disk"],size=request.capacity_range.required_bytes,
-                volume_name=request.name)
+                image="danialnabiyan1382/find-disk:v1.0.0.12",command="/app/create_img.py",env=pod_env)
         is_succeeded = wait_for_pod_Succeeded(pod_name=request.name)
         if is_succeeded == True:
             delete_pod(pod_name=request.name)

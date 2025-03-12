@@ -99,8 +99,9 @@ def delete_daemonset(daemonset_name,namespace="default"):
             body=client.V1DeleteOptions(propagation_policy="Foreground")
         )
     
-def run_pod(pod_name,container_name,node_name,image,command,disk_path,size,volume_name,namespace="default"):
+def run_pod(pod_name,container_name,node_name,image,command,env,namespace="default"):
     api = client.CoreV1Api()
+    env_list = [{"name": key, "value": str(value)} for key, value in env.items()]
     pod_manifest = {
         "apiVersion": "v1",
         "kind": "Pod",
@@ -117,20 +118,7 @@ def run_pod(pod_name,container_name,node_name,image,command,disk_path,size,volum
                         "privileged": True
                     },
                     "command": ["python", command],
-                    "env": [
-                                {
-                                    "name": "disk",
-                                    "value": disk_path
-                                },
-                                {
-                                    "name": "size",
-                                    "value": str(size)
-                                },
-                                {
-                                    "name": "volume",
-                                    "value": volume_name
-                                }
-                           ]
+                    "env": env_list
                 }
             ]
         }
