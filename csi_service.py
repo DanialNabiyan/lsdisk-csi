@@ -59,7 +59,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         parameters = request.parameters
         storage_model = parameters.get("storagemodel", "")
         print(f"storagemodel is {storage_model}")
-        run_daemonset(daemonset_name="find-disk",selector="disk",container_name="find-disk",image="danialnabiyan1382/find-disk:v1.0.0.4",storagemodel=storage_model)
+        run_daemonset(daemonset_name="find-disk",selector="disk",container_name="find-disk",image="danialnabiyan1382/find-disk:v1.0.0.12",storagemodel=storage_model)
         pods = list_pod_by_selector(selector="app=disk")
         pods_log={}
         for pod in pods.items:
