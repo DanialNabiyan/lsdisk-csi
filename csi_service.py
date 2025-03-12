@@ -138,7 +138,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             "volume": request.volume_id,
             "staging_target_path": request.staging_target_path
         }
-        run_pod(pod_name=request.volume_id,command=request.volume_id,node_name=self.node_name,
+        run_pod(pod_name=request.volume_id,container_name=request.volume_id,node_name=self.node_name,
                 image="danialnabiyan1382/find-disk:v1.0.0.13",command="/app/node_stage.py",env=env)
         return csi_pb2.NodeStageVolumeResponse()
 
@@ -147,7 +147,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             "volume":request.volume_id,
             "staging_target_path": request.staging_target_path
         }
-        run_pod(pod_name=request.volume_id,command=request.volume_id,node_name=self.node_name,
+        run_pod(pod_name=request.volume_id,container_name=request.volume_id,node_name=self.node_name,
                 image="danialnabiyan1382/find-disk:v1.0.0.13",command="/app/node_unstage.py",env=env)
         return csi_pb2.NodeUnstageVolumeResponse()
 
