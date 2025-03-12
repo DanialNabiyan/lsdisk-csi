@@ -34,10 +34,13 @@ rules:
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: [""]
     resources: ["pods"]
+    verbs: ["get", "list", "watch","create","delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["daemonsets"]
-    verbs: ["get"]
+    verbs: ["get","list", "watch", "delete","create"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
