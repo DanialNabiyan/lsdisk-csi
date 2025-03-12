@@ -59,7 +59,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         parameters = request.parameters
         storage_model = parameters.get("storagemodel", "")
         print(f"storagemodel is {storage_model}")
-        run_daemonset(daemonset_name="find-disk",selector="disk",container_name="find-disk",image="danialnabiyan1382/find-disk:v1.0.0.12",storagemodel=storage_model)
+        run_daemonset(daemonset_name=request.name,selector="disk",container_name=request.name,image="danialnabiyan1382/find-disk:v1.0.0.12",storagemodel=storage_model)
         pods = list_pod_by_selector(selector="app=disk")
         pods_log={}
         for pod in pods.items:
@@ -72,13 +72,13 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
                 disk = log.get("disk", "unknown")
                 pods_log[pod_name]= {"node": node, "disk": disk}
         node_detail = random.choice(list(pods_log.values()))
-        delete_daemonset(daemonset_name="find-disk") 
-        run_pod(pod_name="create_image",container_name="create_image",node_name=node_detail["node"],
+        delete_daemonset(daemonset_name=request.name) 
+        run_pod(pod_name=request.name,container_name=request.name,node_name=node_detail["node"],
                 image="danialnabiyan1382/find-disk:v1.0.0.12",command="/app/create_img.py",disk_path=node_detail["disk"],size=request.capacity_range.required_bytes,
                 volume_name=request.name)
-        is_succeeded = wait_for_pod_Succeeded(pod_name="create_image")
+        is_succeeded = wait_for_pod_Succeeded(pod_name=request.name)
         if is_succeeded == True:
-            delete_pod(od_name="create_image")
+            delete_pod(od_name=request.name)
             
         volume = csi_pb2.Volume(
             volume_id=request.name,

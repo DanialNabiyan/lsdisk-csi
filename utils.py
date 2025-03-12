@@ -1,7 +1,7 @@
 from asyncio import sleep
 import os
 import subprocess
-from time import time
+import time
 from pathlib import Path
 
 from munch import Munch
@@ -41,8 +41,6 @@ def run_daemonset(daemonset_name,selector,container_name,image,storagemodel):
             "template": {
                 "metadata": {"labels": {"app": selector}},
                 "spec": {
-                    "terminationGracePeriodSeconds": 0,
-                    "restartPolicy": "Never",
                     "containers": [
                         {
                             "name": container_name,
@@ -86,7 +84,7 @@ def wait_for_daemonset_ready(daemonset_name, namespace="default", timeout=300, i
 
         print(f"Checking DaemonSet: Desired={desired}, Ready={ready}")
 
-        if desired == ready:
+        if desired > 0 and ready > 0 and desired == ready:
             return True
         
         time.sleep(interval)
@@ -126,7 +124,7 @@ def run_pod(pod_name,container_name,node_name,image,command,disk_path,size,volum
                                 },
                                 {
                                     "name": "size",
-                                    "value": size
+                                    "value": str(size)
                                 },
                                 {
                                     "name": "volume",
