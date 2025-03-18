@@ -43,6 +43,7 @@ class IdentityService(csi_pb2_grpc.IdentityServicer):
 class ControllerService(csi_pb2_grpc.ControllerServicer):
     
     def CreateVolume(self, request, context):
+        print("CreateVolume***************")
         volume_capability = request.volume_capabilities[0]
         AccessModeEnum = csi_pb2.VolumeCapability.AccessMode.Mode
         if volume_capability.access_mode.mode not in [
@@ -59,7 +60,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         MIN_SIZE = 16 * 1024 * 1024  # 16MiB
         size = max(MIN_SIZE, request.capacity_range.required_bytes)
         storage_model = parameters.get("storagemodel", "")
+        print(f"storage model: {storage_model}")
         disk = find_disk(storage_model)
+        print(f"disk: {disk}")
         if disk == "":
             context.abort(
                     grpc.StatusCode.RESOURCE_EXHAUSTED, "No disk with specify model found"
