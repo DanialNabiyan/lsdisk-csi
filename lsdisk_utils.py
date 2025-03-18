@@ -54,7 +54,7 @@ def mount_bind(src,dest):
     else:
         return
 def umount_device(dest):
-    run(f"umount {dest}")
+    run(f"umount -l {dest}")
     
 def expand_img(volume_id,size):
     img_path = Path(f"/mnt/{volume_id}/disk.img")
