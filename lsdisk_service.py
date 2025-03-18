@@ -53,7 +53,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
                 grpc.StatusCode.INVALID_ARGUMENT,
                 f"Unsupported access mode: {AccessModeEnum.Name(volume_capability.access_mode.mode)}",
             )
-        parameters = request.parameter
+        parameters = request.parameters
         node_name = request.accessibility_requirements.preferred[0].segments[
                 NODE_NAME_TOPOLOGY_KEY
             ]
