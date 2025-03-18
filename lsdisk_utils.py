@@ -24,6 +24,13 @@ def create_img(volume_id,size):
     run(f"mkfs.ext4 {img_file}")
     print(f"image file exist: {img_file.is_file()}")
     
+def check_mounted(dest):
+    is_mounted = run_out(f"mount | grep {dest}").stdout.decode()
+    if is_mounted == "":
+        return False
+    else:
+        return True
+    
 def mount_device(src,dest):
     src = Path(src)
     dest = Path(dest)
@@ -31,7 +38,11 @@ def mount_device(src,dest):
     print(f"dest: {dest} is exist: {dest.exists()}")
     if src.exists():
         if dest.exists():
-            run(f"mount {src} {dest}")
+            print(f"dest: {dest} is mounted: {check_mounted(dest)}")
+            if check_mounted(dest):
+                return
+            else:
+                run(f"mount {src} {dest}")
     else:
         return
 def mount_bind(src,dest):

@@ -120,9 +120,11 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             )
         )
     def NodeStageVolume(self, request, context):
+        print("NodeStageVolume***************")
         storageclass = get_storageclass_from_pv(request.volume_id)
         storagemodel = get_storageclass_storagemodel_param(storageclass_name=storageclass)
         disk = find_disk(storage_model=storagemodel)
+        print(f"disk: {disk}")
         mount_device(src=f"/dev/{disk}",dest="/mnt")
         staging_target_path = request.staging_target_path 
         img_file = Path(f"/mnt/{request.volume_id }/disk.img")
