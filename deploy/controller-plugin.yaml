@@ -45,7 +45,7 @@ spec:
           emptyDir: {}
       containers:
         - name: csi-driver
-          image: danialnabiyan1382/lsdisk:v1.0.0.10
+          image: danialnabiyan1382/lsdisk:v1.0.0.47
           imagePullPolicy: IfNotPresent
           env:
             - name: PROVISIONER_NAME
@@ -66,7 +66,7 @@ spec:
               cpu: 10m
               memory: 100Mi
         - name: external-resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.2.0
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.13.1
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
