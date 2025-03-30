@@ -82,6 +82,12 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
 
     def DeleteVolume(self, request, context):
         return csi_pb2.DeleteVolumeResponse()
+    
+    def GetCapacity(self, request, context):
+        available_capacity = 1024 * 1024 * 1024 * 500
+        return csi_pb2.GetCapacityResponse(
+            available_capacity=available_capacity,
+        )
 
     def ControllerExpandVolume(self, request, context):
         storageclass = get_storageclass_from_pv(pvname=request.volume_id)
