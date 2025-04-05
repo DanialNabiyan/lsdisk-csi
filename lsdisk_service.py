@@ -85,6 +85,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
     
     def GetCapacity(self, request, context):
         print("GetCapacity***************")
+        print(request.parameters)
         available_capacity = 1024 * 1024 * 1024 * 500
         return csi_pb2.GetCapacityResponse(
             available_capacity=available_capacity,
