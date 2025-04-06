@@ -1,3 +1,4 @@
+import shutil
 import grpc
 from csi import csi_pb2_grpc,csi_pb2
 from google.protobuf.wrappers_pb2 import BoolValue  
@@ -89,7 +90,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storage_model = parameters.get("storagemodel", "")
         disk = find_disk(storage_model)
         if disk != "":
-            available_capacity = 1024 * 1024 * 1024 * 500
+            mount_device(src=f"/dev/{disk}",dest="/mnt")
+            available_capacity = shutil.disk_usage("/mnt").free
+            umount_device(dest="/mnt")
             return csi_pb2.GetCapacityResponse(
                 available_capacity=available_capacity,
             )
