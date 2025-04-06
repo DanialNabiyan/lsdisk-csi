@@ -85,11 +85,19 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
     
     def GetCapacity(self, request, context):
         print("GetCapacity***************")
-        print(request.parameters)
-        available_capacity = 1024 * 1024 * 1024 * 500
-        return csi_pb2.GetCapacityResponse(
-            available_capacity=available_capacity,
-        )
+        parameters = request.parameters
+        storage_model = parameters.get("storagemodel", "")
+        disk = find_disk(storage_model)
+        if disk != "":
+            available_capacity = 1024 * 1024 * 1024 * 500
+            return csi_pb2.GetCapacityResponse(
+                available_capacity=available_capacity,
+            )
+        else:
+            available_capacity = 0
+            return csi_pb2.GetCapacityResponse(
+                available_capacity=available_capacity,
+            )
 
     def ControllerExpandVolume(self, request, context):
         storageclass = get_storageclass_from_pv(pvname=request.volume_id)
