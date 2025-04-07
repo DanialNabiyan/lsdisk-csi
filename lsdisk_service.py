@@ -88,6 +88,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         device_name = find_disk(storage_model=storagemodel)
         mount_device(src=device_name,dest="/mnt")
         be_absent(f"/mnt/{request.volume_id}")
+        umount_device("/mnt")
         return csi_pb2.DeleteVolumeResponse()
     
     def GetCapacity(self, request, context):

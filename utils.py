@@ -43,6 +43,7 @@ def get_storageclass_from_pv(pvname):
 
 def be_absent(path):
     path = Path(path)
+    print(f"path is exist: {path.exists()}")
     if path.is_symlink():
         path.unlink()
     elif path.is_file():
