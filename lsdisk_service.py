@@ -155,6 +155,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
+        print("NodeUnStageVolume***************")
         storageclass = get_storageclass_from_pv(request.volume_id)
         storagemodel = get_storageclass_storagemodel_param(storageclass_name=storageclass)
         disk = find_disk(storage_model=storagemodel)
@@ -176,6 +177,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         return csi_pb2.NodePublishVolumeResponse()
 
     def NodeUnpublishVolume(self, request, context):
+        print("NodeUnpublishVolume***************")
         target_path = request.target_path
         umount_device(target_path)
         be_absent(path=target_path)
