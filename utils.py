@@ -2,6 +2,7 @@ from asyncio import sleep
 import os
 import subprocess
 from pathlib import Path
+import shutil
 
 from munch import Munch
 from kubernetes import client, config
@@ -49,7 +50,7 @@ def be_absent(path):
     elif path.is_file():
         path.unlink()
     elif path.is_dir():
-        path.rmdir()
+        shutil.rmtree(path)
     elif not path.exists():
         return
     else:
