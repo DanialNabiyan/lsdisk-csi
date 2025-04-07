@@ -82,10 +82,10 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         return csi_pb2.CreateVolumeResponse(volume=volume)
 
     def DeleteVolume(self, request, context):
+        print("DeleteVolume***************")
         return csi_pb2.DeleteVolumeResponse()
     
     def GetCapacity(self, request, context):
-        print("GetCapacity***************")
         parameters = request.parameters
         storage_model = parameters.get("storagemodel", "")
         disk = find_disk(storage_model)
