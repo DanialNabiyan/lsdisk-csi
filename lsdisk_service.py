@@ -161,8 +161,8 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         mount_device(src=f"/dev/{disk}",dest="/mnt")
         img_file = Path(f"/mnt/{request.volume_id}/disk.img")
         staging_path = request.staging_target_path
-        staging_dev_path = Path(f"{staging_path}/dev")
-        be_absent(staging_dev_path)
+        umount_device(staging_path)
+        be_absent(staging_path)
         detach_loops(img_file)
         umount_device("/mnt")
         return csi_pb2.NodeUnstageVolumeResponse()
