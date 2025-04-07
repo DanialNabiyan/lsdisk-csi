@@ -83,6 +83,11 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
 
     def DeleteVolume(self, request, context):
         print("DeleteVolume***************")
+        storageclass = get_storageclass_from_pv(pvname=request.volume_id)
+        storagemodel = get_storageclass_storagemodel_param(storageclass_name=storageclass)
+        device_name = find_disk(storage_model=storagemodel)
+        mount_device(src=device_name,dest="/mnt")
+        be_absent(f"/mnt/{request.volume_id}")
         return csi_pb2.DeleteVolumeResponse()
     
     def GetCapacity(self, request, context):
