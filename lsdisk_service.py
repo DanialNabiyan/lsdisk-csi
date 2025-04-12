@@ -62,6 +62,7 @@ class IdentityService(csi_pb2_grpc.IdentityServicer):
 class ControllerService(csi_pb2_grpc.ControllerServicer):
 
     def CreateVolume(self, request, context):
+        logger.info(f"CreateVolume request for pv {request.name}")
         volume_capability = request.volume_capabilities[0]
         AccessModeEnum = csi_pb2.VolumeCapability.AccessMode.Mode
         if volume_capability.access_mode.mode not in [
@@ -99,6 +100,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         return csi_pb2.CreateVolumeResponse(volume=volume)
 
     def DeleteVolume(self, request, context):
+        logger.info(f"DeleteVolume request for pv {request.volume_id}")
         storageclass = get_storageclass_from_pv(pvname=request.volume_id)
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
@@ -171,6 +173,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         )
 
     def NodeStageVolume(self, request, context):
+        logger.info(f"NodeStageVolume request for pv {request.volume_id}")
         storageclass = get_storageclass_from_pv(request.volume_id)
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
@@ -185,6 +188,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
+        logger.info(f"NodeUnstageVolume request for pv {request.volume_id}")
         storageclass = get_storageclass_from_pv(request.volume_id)
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
@@ -200,12 +204,14 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         return csi_pb2.NodeUnstageVolumeResponse()
 
     def NodePublishVolume(self, request, context):
+        logger.info(f"NodePublishVolume request for pv {request.volume_id}")
         target_path = request.target_path
         staging_path = request.staging_target_path
         mount_bind(src=staging_path, dest=target_path)
         return csi_pb2.NodePublishVolumeResponse()
 
     def NodeUnpublishVolume(self, request, context):
+        logger.info(f"NodeUnpublishVolume request for pv {request.volume_id}")
         target_path = request.target_path
         umount_device(target_path)
         be_absent(path=target_path)
