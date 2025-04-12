@@ -6,7 +6,9 @@ import shutil
 
 from munch import Munch
 from kubernetes import client, config
+from logger import get_logger
 
+logger = get_logger(__name__)
 config.load_incluster_config()
 
 
@@ -41,12 +43,17 @@ def get_storageclass_from_pv(pvname):
 def be_absent(path):
     path = Path(path)
     if path.is_symlink():
+        logger.info(f"Deleting symlink: {path}")
         path.unlink()
     elif path.is_file():
+        logger.info(f"Deleting file: {path}")
         path.unlink()
     elif path.is_dir():
+        logger.info(f"Deleting directory: {path}")
         shutil.rmtree(path)
     elif not path.exists():
+        logger.info(f"Path does not exist, nothing to delete: {path}")
         return
     else:
+        logger.error(f"Unknown file type: {path}")
         raise Exception("Unknown file type")
