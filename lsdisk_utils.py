@@ -7,7 +7,7 @@ logger = get_logger(__name__)
 
 
 def find_disk(storage_model):
-    output = run("lsblk -o MODEL,NAME -d").stdout.decode()
+    output = run_out("lsblk -o MODEL,NAME -d").stdout.decode()
     lines = output.strip().split("\n")[1:]
     result = {}
     for line in lines:
