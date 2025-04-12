@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from utils import checkoutput, run, run_out
+from utils import run, run_out
 from logger import get_logger
 
 logger = get_logger(__name__)

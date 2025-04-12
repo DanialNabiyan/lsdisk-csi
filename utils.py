@@ -19,10 +19,6 @@ def run_out(cmd: str):
     return p
 
 
-def checkoutput(cmd):
-    return subprocess.check_output(cmd, shell=True).decode("utf-8")
-
-
 def get_node_name():
     return os.getenv("NODE_NAME")
 
