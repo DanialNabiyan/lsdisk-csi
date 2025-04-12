@@ -27,14 +27,6 @@ def get_node_name():
     return os.getenv("NODE_NAME")
 
 
-def check_node_name(node):
-    node_name = get_node_name()
-    if node == node_name:
-        return True
-    else:
-        return False
-
-
 def get_storageclass_storagemodel_param(storageclass_name):
     api_instance = client.StorageV1Api()
     storage_class = api_instance.read_storage_class(storageclass_name)
@@ -52,7 +44,6 @@ def get_storageclass_from_pv(pvname):
 
 def be_absent(path):
     path = Path(path)
-    print(f"path is exist: {path.exists()}")
     if path.is_symlink():
         path.unlink()
     elif path.is_file():

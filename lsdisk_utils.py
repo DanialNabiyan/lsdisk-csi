@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 from utils import checkoutput, run, run_out
+from logger import get_logger
+logger = get_logger(__name__)
 
 
 def find_disk(storage_model):
@@ -25,7 +27,12 @@ def create_img(volume_id, size):
         return
     run(f"truncate -s {size} {img_file}")
     run(f"mkfs.ext4 {img_file}")
-    print(f"image file exist: {img_file.is_file()}")
+    if img_file.is_file():
+        logger.info(f"img file: {img_file} is created")
+        return True
+    else:
+        logger.error(f"img file: {img_file} is not created")
+        return False
 
 
 def check_mounted(dest):
@@ -39,11 +46,8 @@ def check_mounted(dest):
 def mount_device(src, dest):
     src = Path(src)
     dest = Path(dest)
-    print(f"src: {src} is exist: {src.exists()}")
-    print(f"dest: {dest} is exist: {dest.exists()}")
     if src.exists():
         if dest.exists():
-            print(f"dest: {dest} is mounted: {check_mounted(dest)}")
             if check_mounted(dest):
                 return
             else:

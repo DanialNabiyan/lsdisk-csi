@@ -20,7 +20,9 @@ from utils import (
     run,
 )
 from pathlib import Path
+from logger import get_logger
 
+logger = get_logger(__name__)
 NODE_NAME_TOPOLOGY_KEY = "hostname"
 
 
@@ -60,7 +62,6 @@ class IdentityService(csi_pb2_grpc.IdentityServicer):
 class ControllerService(csi_pb2_grpc.ControllerServicer):
 
     def CreateVolume(self, request, context):
-        print("CreateVolume***************")
         volume_capability = request.volume_capabilities[0]
         AccessModeEnum = csi_pb2.VolumeCapability.AccessMode.Mode
         if volume_capability.access_mode.mode not in [
@@ -77,9 +78,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         MIN_SIZE = 16 * 1024 * 1024  # 16MiB
         size = max(MIN_SIZE, request.capacity_range.required_bytes)
         storage_model = parameters.get("storagemodel", "")
-        print(f"storage model: {storage_model}")
+        logger.info(f"storage model: {storage_model}")
         disk = find_disk(storage_model)
-        print(f"disk: {disk}")
+        logger.info(f"disk: {disk}")
         if disk == "":
             context.abort(
                 grpc.StatusCode.RESOURCE_EXHAUSTED, "No disk with specify model found"
@@ -98,7 +99,6 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         return csi_pb2.CreateVolumeResponse(volume=volume)
 
     def DeleteVolume(self, request, context):
-        print("DeleteVolume***************")
         storageclass = get_storageclass_from_pv(pvname=request.volume_id)
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
@@ -171,25 +171,20 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         )
 
     def NodeStageVolume(self, request, context):
-        print("NodeStageVolume***************")
         storageclass = get_storageclass_from_pv(request.volume_id)
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
         disk = find_disk(storage_model=storagemodel)
-        print(f"disk: {disk}")
         mount_device(src=f"/dev/{disk}", dest="/mnt")
         staging_target_path = request.staging_target_path
         img_file = Path(f"/mnt/{request.volume_id }/disk.img")
         loop_file = attach_loop(img_file)
-        print(f"loop_file: {loop_file}")
-        print(f"staging_path: {staging_target_path}")
         mount_device(src=loop_file, dest=staging_target_path)
         umount_device(dest="/mnt")
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
-        print("NodeUnStageVolume***************")
         storageclass = get_storageclass_from_pv(request.volume_id)
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
@@ -206,14 +201,11 @@ class NodeService(csi_pb2_grpc.NodeServicer):
 
     def NodePublishVolume(self, request, context):
         target_path = request.target_path
-        print(f"target_path: {target_path}")
         staging_path = request.staging_target_path
-        print(f"staging_path: {staging_path}")
         mount_bind(src=staging_path, dest=target_path)
         return csi_pb2.NodePublishVolumeResponse()
 
     def NodeUnpublishVolume(self, request, context):
-        print("NodeUnpublishVolume***************")
         target_path = request.target_path
         umount_device(target_path)
         be_absent(path=target_path)
