@@ -21,6 +21,7 @@ from utils import (
 )
 from pathlib import Path
 from logger import get_logger
+from kubernetes.client.exceptions import ApiException
 
 logger = get_logger(__name__)
 NODE_NAME_TOPOLOGY_KEY = "hostname"
@@ -189,10 +190,17 @@ class NodeService(csi_pb2_grpc.NodeServicer):
 
     def NodeUnstageVolume(self, request, context):
         logger.info(f"NodeUnstageVolume request for pv {request.volume_id}")
-        storageclass = get_storageclass_from_pv(request.volume_id)
-        storagemodel = get_storageclass_storagemodel_param(
-            storageclass_name=storageclass
-        )
+        try:
+            storageclass = get_storageclass_from_pv(request.volume_id)
+            storagemodel = get_storageclass_storagemodel_param(
+                storageclass_name=storageclass
+            )
+        except ApiException as e:
+            if e.status == 404:
+                logger.warning(
+                    f"PV {request.volume_id} not found. Assuming it was already deleted. Returning success."
+                )
+                return csi_pb2.NodeUnstageVolumeResponse()
         disk = find_disk(storage_model=storagemodel)
         mount_device(src=f"/dev/{disk}", dest="/mnt")
         img_file = Path(f"/mnt/{request.volume_id}/disk.img")
