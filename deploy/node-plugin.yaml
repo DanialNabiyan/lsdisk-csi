@@ -42,6 +42,8 @@ spec:
           securityContext:
             privileged: true
           env:
+            - name: TZ
+              value: "Asia/Tehran"
             - name: PROVISIONER_NAME
               value: lsdisk.driver
             - name: CSI_ENDPOINT

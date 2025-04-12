@@ -48,6 +48,8 @@ spec:
           image: danialnabiyan1382/lsdisk:v1.0.0.47
           imagePullPolicy: IfNotPresent
           env:
+            - name: TZ
+              value: "Asia/Tehran"
             - name: PROVISIONER_NAME
               value: "lsdisk.driver"
             - name: CSI_ENDPOINT
