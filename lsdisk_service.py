@@ -131,6 +131,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             if is_deleted:
                 logger.info(f"img file: {request.volume_id} is deleted")
                 break
+        logger.info("test")
         return csi_pb2.DeleteVolumeResponse()
 
     def GetCapacity(self, request, context):
