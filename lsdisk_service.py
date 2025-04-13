@@ -119,7 +119,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             else:
                 logger.error(f"Error reading PV {request.volume_id}: {e}")
                 context.abort(grpc.StatusCode.INTERNAL, str(e))
-                
+
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
@@ -131,7 +131,6 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             if is_deleted:
                 logger.info(f"img file: {request.volume_id} is deleted")
                 break
-        logger.info("test")
         return csi_pb2.DeleteVolumeResponse()
 
     def GetCapacity(self, request, context):
