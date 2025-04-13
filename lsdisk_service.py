@@ -116,6 +116,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         for disk in disks:
             mount_device(src=f"/dev/{disk}", dest="/mnt")
             is_deleted = be_absent(f"/mnt/{request.volume_id}")
+            logger.info(f"img file: {request.volume_id} is deleted: {is_deleted}")
             umount_device("/mnt")
             if is_deleted:
                 break
