@@ -108,7 +108,18 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
 
     def DeleteVolume(self, request, context):
         logger.info(f"DeleteVolume request for pv {request.volume_id}")
-        storageclass = get_storageclass_from_pv(pvname=request.volume_id)
+        try:
+            storageclass = get_storageclass_from_pv(pvname=request.volume_id)
+        except ApiException as e:
+            if e.status == 404:
+                logger.info(
+                    f"PV {request.volume_id} not found, assuming already deleted."
+                )
+                return csi_pb2.DeleteVolumeResponse()
+            else:
+                logger.error(f"Error reading PV {request.volume_id}: {e}")
+                context.abort(grpc.StatusCode.INTERNAL, str(e))
+                
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
@@ -116,9 +127,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         for disk in disks:
             mount_device(src=f"/dev/{disk}", dest="/mnt")
             is_deleted = be_absent(f"/mnt/{request.volume_id}")
-            logger.info(f"img file: {request.volume_id} is deleted: {is_deleted}")
             umount_device("/mnt")
             if is_deleted:
+                logger.info(f"img file: {request.volume_id} is deleted")
                 break
         return csi_pb2.DeleteVolumeResponse()
 
