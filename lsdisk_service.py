@@ -194,17 +194,17 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             storageclass_name=storageclass
         )
         disks = find_disk(storage_model=storagemodel)
-        disk = (
-            get_device_with_most_free_space(disks)
-            if len(disks) > 1
-            else disks[0] if disks else ""
-        )
-        mount_device(src=f"/dev/{disk}", dest="/mnt")
         staging_target_path = request.staging_target_path
         img_file = Path(f"/mnt/{request.volume_id }/disk.img")
-        loop_file = attach_loop(img_file)
-        mount_device(src=loop_file, dest=staging_target_path)
-        umount_device(dest="/mnt")
+        for disk in disks:
+            mount_device(src=f"/dev/{disk}", dest="/mnt")
+            if img_file.is_file():
+                loop_file = attach_loop(img_file)
+                mount_device(src=loop_file, dest=staging_target_path)
+                umount_device("/mnt")
+                break
+
+            umount_device(dest="/mnt")
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
@@ -232,6 +232,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
                 detach_loops(img_file)
                 umount_device("/mnt")
                 break
+            umount_device("/mnt")
         return csi_pb2.NodeUnstageVolumeResponse()
 
     def NodePublishVolume(self, request, context):
