@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import shutil
 from utils import run, run_out
 from logger import get_logger
 
@@ -12,10 +13,36 @@ def find_disk(storage_model):
     result = {}
     for line in lines:
         parts = line.strip().split(None, 1)
+        if len(parts) < 2:
+            continue
         model = parts[0]
-        device_name = parts[1] if len(parts) > 1 else ""
-        result[model] = device_name
-    return result.get(storage_model, "")
+        device_name = parts[1]
+        if model not in result:
+            result[model] = []
+        result[model].append(device_name)
+    return result.get(storage_model, [])
+
+
+def get_device_with_most_free_space(devices):
+    max_free_space = 0
+    device_with_most_space = None
+
+    for device in devices:
+        device_path = f"/dev/{device}"
+        try:
+            mount_device(src=device_path, dest="/mnt")
+            usage = shutil.disk_usage("/mnt")
+            free_space = usage.free
+            if free_space > max_free_space:
+                max_free_space = free_space
+                device_with_most_space = device
+            umount_device(dest="/mnt")
+        except FileNotFoundError:
+            logger.warning(f"Device {device_path} not found or inaccessible.")
+        except Exception as e:
+            logger.error(f"Error checking free space for device {device_path}: {e}")
+
+    return device_with_most_space
 
 
 def create_img(volume_id, size):
@@ -38,21 +65,15 @@ def create_img(volume_id, size):
 
 def check_mounted(dest):
     is_mounted = run_out(f"mount | grep {dest}").stdout.decode()
-    if is_mounted == "":
-        return False
-    else:
-        return True
+    return bool(is_mounted)
 
 
 def mount_device(src, dest):
     src = Path(src)
     dest = Path(dest)
-    if src.exists():
-        if dest.exists():
-            if check_mounted(dest):
-                return
-            else:
-                run(f"mount {src} {dest}")
+    if src.exists() and dest.exists():
+        if not check_mounted(dest):
+            run(f"mount {src} {dest}")
     else:
         return
 
