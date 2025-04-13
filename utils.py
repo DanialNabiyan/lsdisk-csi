@@ -45,12 +45,15 @@ def be_absent(path):
     if path.is_symlink():
         logger.info(f"Deleting symlink: {path}")
         path.unlink()
+        return True
     elif path.is_file():
         logger.info(f"Deleting file: {path}")
         path.unlink()
+        return True
     elif path.is_dir():
         logger.info(f"Deleting directory: {path}")
         shutil.rmtree(path)
+        return True
     elif not path.exists():
         logger.info(f"Path does not exist, nothing to delete: {path}")
         return
