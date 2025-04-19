@@ -4,6 +4,7 @@ from csi import csi_pb2_grpc, csi_pb2
 from google.protobuf.wrappers_pb2 import BoolValue
 from lsdisk_utils import (
     find_disk,
+    get_device_with_most_free_space,
     create_img,
     mount_device,
     umount_device,
@@ -81,12 +82,17 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         size = max(MIN_SIZE, request.capacity_range.required_bytes)
         storage_model = parameters.get("storagemodel", "")
         logger.info(f"storage model: {storage_model}")
-        disk = find_disk(storage_model)
-        logger.info(f"disk: {disk}")
+        disks = find_disk(storage_model)
+        disk = (
+            get_device_with_most_free_space(disks)
+            if len(disks) > 1
+            else disks[0] if disks else ""
+        )
         if disk == "":
             context.abort(
                 grpc.StatusCode.RESOURCE_EXHAUSTED, "No disk with specify model found"
             )
+        logger.info(f"disk: {disk} is selected")
         mount_device(src=f"/dev/{disk}", dest="/mnt")
         create_img(volume_id=request.name, size=size)
         umount_device(dest="/mnt")
@@ -102,20 +108,40 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
 
     def DeleteVolume(self, request, context):
         logger.info(f"DeleteVolume request for pv {request.volume_id}")
-        storageclass = get_storageclass_from_pv(pvname=request.volume_id)
+        try:
+            storageclass = get_storageclass_from_pv(pvname=request.volume_id)
+        except ApiException as e:
+            if e.status == 404:
+                logger.info(
+                    f"PV {request.volume_id} not found, assuming already deleted."
+                )
+                return csi_pb2.DeleteVolumeResponse()
+            else:
+                logger.error(f"Error reading PV {request.volume_id}: {e}")
+                context.abort(grpc.StatusCode.INTERNAL, str(e))
+
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
-        disk = find_disk(storage_model=storagemodel)
-        mount_device(src=f"/dev/{disk}", dest="/mnt")
-        be_absent(f"/mnt/{request.volume_id}")
-        umount_device("/mnt")
+        disks = find_disk(storage_model=storagemodel)
+        for disk in disks:
+            mount_device(src=f"/dev/{disk}", dest="/mnt")
+            is_deleted = be_absent(f"/mnt/{request.volume_id}")
+            umount_device("/mnt")
+            if is_deleted:
+                logger.info(f"img file: {request.volume_id} is deleted")
+                break
         return csi_pb2.DeleteVolumeResponse()
 
     def GetCapacity(self, request, context):
         parameters = request.parameters
         storage_model = parameters.get("storagemodel", "")
-        disk = find_disk(storage_model)
+        disks = find_disk(storage_model)
+        disk = (
+            get_device_with_most_free_space(disks)
+            if len(disks) > 1
+            else disks[0] if disks else ""
+        )
         if disk != "":
             mount_device(src=f"/dev/{disk}", dest="/mnt")
             available_capacity = shutil.disk_usage("/mnt").free
@@ -179,13 +205,18 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
-        disk = find_disk(storage_model=storagemodel)
-        mount_device(src=f"/dev/{disk}", dest="/mnt")
+        disks = find_disk(storage_model=storagemodel)
         staging_target_path = request.staging_target_path
         img_file = Path(f"/mnt/{request.volume_id }/disk.img")
-        loop_file = attach_loop(img_file)
-        mount_device(src=loop_file, dest=staging_target_path)
-        umount_device(dest="/mnt")
+        for disk in disks:
+            mount_device(src=f"/dev/{disk}", dest="/mnt")
+            if img_file.is_file():
+                loop_file = attach_loop(img_file)
+                mount_device(src=loop_file, dest=staging_target_path)
+                umount_device("/mnt")
+                break
+
+            umount_device(dest="/mnt")
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
@@ -201,14 +232,19 @@ class NodeService(csi_pb2_grpc.NodeServicer):
                     f"PV {request.volume_id} not found. Assuming it was already deleted. Returning success."
                 )
                 return csi_pb2.NodeUnstageVolumeResponse()
-        disk = find_disk(storage_model=storagemodel)
-        mount_device(src=f"/dev/{disk}", dest="/mnt")
         img_file = Path(f"/mnt/{request.volume_id}/disk.img")
         staging_path = request.staging_target_path
         umount_device(staging_path)
         be_absent(staging_path)
-        detach_loops(img_file)
-        umount_device("/mnt")
+        disks = find_disk(storage_model=storagemodel)
+        for disk in disks:
+            mount_device(src=f"/dev/{disk}", dest="/mnt")
+            isfile_exist = img_file.is_file()
+            if isfile_exist:
+                detach_loops(img_file)
+                umount_device("/mnt")
+                break
+            umount_device("/mnt")
         return csi_pb2.NodeUnstageVolumeResponse()
 
     def NodePublishVolume(self, request, context):
