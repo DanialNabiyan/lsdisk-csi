@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 from utils import run, run_out
 from logger import get_logger
+from constance.config import MOUNT_DEST, IMAGE_NAME
 
 logger = get_logger(__name__)
 
@@ -30,13 +31,13 @@ def get_device_with_most_free_space(devices):
     for device in devices:
         device_path = f"/dev/{device}"
         try:
-            mount_device(src=device_path, dest="/mnt")
-            usage = shutil.disk_usage("/mnt")
+            mount_device(src=device_path, dest=MOUNT_DEST)
+            usage = shutil.disk_usage(MOUNT_DEST)
             free_space = usage.free
             if free_space > max_free_space:
                 max_free_space = free_space
                 device_with_most_space = device
-            umount_device(dest="/mnt")
+            umount_device(dest=MOUNT_DEST)
         except FileNotFoundError:
             logger.warning(f"Device {device_path} not found or inaccessible.")
         except Exception as e:
@@ -46,11 +47,11 @@ def get_device_with_most_free_space(devices):
 
 
 def create_img(volume_id, size):
-    img_dir = Path(f"/mnt/{volume_id}")
+    img_dir = Path(f"{MOUNT_DEST}/{volume_id}")
     if img_dir.exists():
         return
     img_dir.mkdir()
-    img_file = Path(f"/mnt/{volume_id}/disk.img")
+    img_file = Path(f"{MOUNT_DEST}/{volume_id}/{IMAGE_NAME}")
     if img_file.is_file():
         return
     run(f"truncate -s {size} {img_file}")
@@ -93,7 +94,7 @@ def umount_device(dest):
 
 
 def expand_img(volume_id, size):
-    img_path = Path(f"/mnt/{volume_id}/disk.img")
+    img_path = Path(f"{MOUNT_DEST}/{volume_id}/{IMAGE_NAME}")
     file_size = os.path.getsize(img_path)
     if size > file_size:
         run(f"truncate -s {size} {img_path}")

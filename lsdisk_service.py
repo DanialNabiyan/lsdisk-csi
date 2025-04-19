@@ -20,6 +20,7 @@ from utils import (
     be_absent,
     run,
 )
+from constance.config import IMAGE_NAME, MOUNT_DEST
 from pathlib import Path
 from logger import get_logger
 from kubernetes.client.exceptions import ApiException
@@ -93,9 +94,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
                 grpc.StatusCode.RESOURCE_EXHAUSTED, "No disk with specify model found"
             )
         logger.info(f"disk: {disk} is selected")
-        mount_device(src=f"/dev/{disk}", dest="/mnt")
+        mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
         create_img(volume_id=request.name, size=size)
-        umount_device(dest="/mnt")
+        umount_device(dest=MOUNT_DEST)
 
         volume = csi_pb2.Volume(
             volume_id=request.name,
@@ -125,9 +126,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         )
         disks = find_disk(storage_model=storagemodel)
         for disk in disks:
-            mount_device(src=f"/dev/{disk}", dest="/mnt")
-            is_deleted = be_absent(f"/mnt/{request.volume_id}")
-            umount_device("/mnt")
+            mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
+            is_deleted = be_absent(f"{MOUNT_DEST}/{request.volume_id}")
+            umount_device(MOUNT_DEST)
             if is_deleted:
                 logger.info(f"img file: {request.volume_id} is deleted")
                 break
@@ -143,9 +144,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             else disks[0] if disks else ""
         )
         if disk != "":
-            mount_device(src=f"/dev/{disk}", dest="/mnt")
-            available_capacity = shutil.disk_usage("/mnt").free
-            umount_device(dest="/mnt")
+            mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
+            available_capacity = shutil.disk_usage(MOUNT_DEST).free
+            umount_device(dest=MOUNT_DEST)
             return csi_pb2.GetCapacityResponse(
                 available_capacity=available_capacity,
             )
@@ -179,11 +180,11 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             else disks[0] if disks else ""
         )
         if disk != "":
-            mount_device(src=disk, dest="/mnt")
+            mount_device(src=disk, dest=MOUNT_DEST)
             expand_img(
                 volume_id=request.volume_id, size=request.capacity_range.required_bytes
             )
-            umount_device("/mnt")
+            umount_device(MOUNT_DEST)
             return csi_pb2.ControllerExpandVolumeResponse(
                 capacity_bytes=request.capacity_bytes
             )
@@ -230,16 +231,16 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         )
         disks = find_disk(storage_model=storagemodel)
         staging_target_path = request.staging_target_path
-        img_file = Path(f"/mnt/{request.volume_id }/disk.img")
+        img_file = Path(f"{MOUNT_DEST}/{request.volume_id }/{IMAGE_NAME}")
         for disk in disks:
-            mount_device(src=f"/dev/{disk}", dest="/mnt")
+            mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
             if img_file.is_file():
                 loop_file = attach_loop(img_file)
                 mount_device(src=loop_file, dest=staging_target_path)
-                umount_device("/mnt")
+                umount_device(MOUNT_DEST)
                 break
 
-            umount_device(dest="/mnt")
+            umount_device(dest=MOUNT_DEST)
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
@@ -255,19 +256,19 @@ class NodeService(csi_pb2_grpc.NodeServicer):
                     f"PV {request.volume_id} not found. Assuming it was already deleted. Returning success."
                 )
                 return csi_pb2.NodeUnstageVolumeResponse()
-        img_file = Path(f"/mnt/{request.volume_id}/disk.img")
+        img_file = Path(f"{MOUNT_DEST}/{request.volume_id}/{IMAGE_NAME}")
         staging_path = request.staging_target_path
         umount_device(staging_path)
         be_absent(staging_path)
         disks = find_disk(storage_model=storagemodel)
         for disk in disks:
-            mount_device(src=f"/dev/{disk}", dest="/mnt")
+            mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
             isfile_exist = img_file.is_file()
             if isfile_exist:
                 detach_loops(img_file)
-                umount_device("/mnt")
+                umount_device(MOUNT_DEST)
                 break
-            umount_device("/mnt")
+            umount_device(MOUNT_DEST)
         return csi_pb2.NodeUnstageVolumeResponse()
 
     def NodePublishVolume(self, request, context):
