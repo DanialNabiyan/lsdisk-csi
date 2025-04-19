@@ -25,6 +25,20 @@ def get_node_name():
     return os.getenv("NODE_NAME")
 
 
+def get_node_from_pv(pvname):
+    v1 = client.CoreV1Api()
+    pv = v1.read_persistent_volume(pvname)
+    pv = Munch.fromDict(pv)
+    node_name = (
+        pv.spec.node_affinity.required.node_selector_terms[0]
+        .match_expressions[0]
+        .values[0]
+    )
+    if node_name == "":
+        raise Exception("Node name is empty")
+    return node_name
+
+
 def get_storageclass_storagemodel_param(storageclass_name):
     api_instance = client.StorageV1Api()
     storage_class = api_instance.read_storage_class(storageclass_name)
