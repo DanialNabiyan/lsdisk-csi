@@ -156,19 +156,42 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             )
 
     def ControllerExpandVolume(self, request, context):
-        storageclass = get_storageclass_from_pv(pvname=request.volume_id)
+        logger.info(f"ControllerExpandVolume request for pv {request.volume_id}")
+        try:
+            storageclass = get_storageclass_from_pv(pvname=request.volume_id)
+        except ApiException as e:
+            if e.status == 404:
+                logger.info(
+                    f"PV {request.volume_id} not found, assuming already deleted."
+                )
+                return csi_pb2.DeleteVolumeResponse()
+            else:
+                logger.error(f"Error reading PV {request.volume_id}: {e}")
+                context.abort(grpc.StatusCode.INTERNAL, str(e))
+
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
-        device_name = find_disk(storage_model=storagemodel)
-        mount_device(src=device_name, dest="/mnt")
-        expand_img(
-            volume_id=request.volume_id, size=request.capacity_range.required_bytes
+        disks = find_disk(storage_model=storagemodel)
+        disk = (
+            get_device_with_most_free_space(disks)
+            if len(disks) > 1
+            else disks[0] if disks else ""
         )
-        umount_device(device_name)
-        return csi_pb2.ControllerExpandVolumeResponse(
-            capacity_bytes=request.capacity_bytes
-        )
+        if disk != "":
+            mount_device(src=disk, dest="/mnt")
+            expand_img(
+                volume_id=request.volume_id, size=request.capacity_range.required_bytes
+            )
+            umount_device("/mnt")
+            return csi_pb2.ControllerExpandVolumeResponse(
+                capacity_bytes=request.capacity_bytes
+            )
+        else:
+            context.abort(
+                grpc.StatusCode.RESOURCE_EXHAUSTED,
+                "No disk with specify model found",
+            )
 
     def ControllerGetCapabilities(self, request, context):
         return csi_pb2.ControllerGetCapabilitiesResponse(
