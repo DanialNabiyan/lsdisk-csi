@@ -22,13 +22,13 @@ spec:
   replicas: 1
   serviceName: lsdisk-driver
   selector:
-    matchLabels: 
+    matchLabels:
       app.kubernetes.io/instance: lsdisk
       app.kubernetes.io/name: lsdisk
       component: controller
   template:
     metadata:
-      labels: 
+      labels:
         app.kubernetes.io/instance: lsdisk
         app.kubernetes.io/name: lsdisk
         component: controller
@@ -47,6 +47,9 @@ spec:
         - name: csi-driver
           image: danialnabiyan1382/lsdisk:v1.0.0.47
           imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: lsdisk
           env:
             - name: TZ
               value: "Asia/Tehran"

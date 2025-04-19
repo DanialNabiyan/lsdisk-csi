@@ -7,13 +7,13 @@ spec:
     rollingUpdate:
       maxUnavailable: "100%"
   selector:
-    matchLabels: 
+    matchLabels:
       app.kubernetes.io/instance: lsdisk
       app.kubernetes.io/name: lsdisk
       component: node
   template:
     metadata:
-      labels: 
+      labels:
         app.kubernetes.io/instance: lsdisk
         app.kubernetes.io/name: lsdisk
         component: node
@@ -41,6 +41,9 @@ spec:
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true
+          envFrom:
+            - configMapRef:
+                name: lsdisk
           env:
             - name: TZ
               value: "Asia/Tehran"
