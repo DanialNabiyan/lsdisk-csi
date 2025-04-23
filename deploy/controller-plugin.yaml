@@ -45,12 +45,14 @@ spec:
           emptyDir: {}
       containers:
         - name: csi-driver
-          image: danialnabiyan1382/lsdisk:v1.0.0.47
+          image: danialnabiyan1382/lsdisk:v1.0.0.74
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
                 name: lsdisk
           env:
+            - name: POD_IMAGE
+              value: "danialnabiyan1382/lsdisk:v1.0.0.74"
             - name: TZ
               value: "Asia/Tehran"
             - name: PROVISIONER_NAME
