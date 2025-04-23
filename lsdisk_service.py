@@ -8,7 +8,6 @@ from lsdisk_utils import (
     create_img,
     mount_device,
     umount_device,
-    expand_img,
     attach_loop,
     detach_loops,
     mount_bind,
@@ -19,8 +18,10 @@ from utils import (
     get_node_name,
     be_absent,
     run,
+    run_pod,
+    cleanup_pod,
 )
-from constance.config import IMAGE_NAME, MOUNT_DEST
+from constance.config import IMAGE_NAME, MOUNT_DEST, POD_IMAGE
 from pathlib import Path
 from logger import get_logger
 from kubernetes.client.exceptions import ApiException
@@ -173,18 +174,20 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
-        disks = find_disk(storage_model=storagemodel)
-        disk = (
-            get_device_with_most_free_space(disks)
-            if len(disks) > 1
-            else disks[0] if disks else ""
+        env_vars = {
+            "STORAGE_MODEL": storagemodel,
+            "VOLUME_ID": request.volume_id,
+            "CAPACITY_RANGE": request.capacity_range.required_bytes,
+            "MOUNT_DEST": MOUNT_DEST,
+        }
+        run_pod(
+            pod_name=request.volume_id,
+            image=POD_IMAGE,
+            command=["python", "/app/extend_image.py"],
+            env_vars=env_vars,
         )
-        if disk != "":
-            mount_device(src=disk, dest=MOUNT_DEST)
-            expand_img(
-                volume_id=request.volume_id, size=request.capacity_range.required_bytes
-            )
-            umount_device(MOUNT_DEST)
+        is_deleted = cleanup_pod(pod_name=request.volume_id)
+        if is_deleted:
             return csi_pb2.ControllerExpandVolumeResponse(
                 capacity_bytes=request.capacity_bytes
             )
