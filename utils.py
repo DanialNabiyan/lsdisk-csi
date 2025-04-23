@@ -54,6 +54,68 @@ def get_storageclass_from_pv(pvname):
     return pv.spec.storage_class_name
 
 
+def run_pod(
+    pod_name, image, namespace="default", command=None, args=None, env_vars=None
+):
+    v1 = client.CoreV1Api()
+
+    env = []
+    if env_vars:
+        env = [client.V1EnvVar(name=k, value=v) for k, v in env_vars.items()]
+
+    container = client.V1Container(
+        name=pod_name,
+        image=image,
+        command=command,
+        args=args,
+        env=env,
+    )
+
+    pod_spec = client.V1PodSpec(containers=[container], restart_policy="Never")
+
+    metadata = client.V1ObjectMeta(name=pod_name)
+
+    pod = client.V1Pod(
+        api_version="v1",
+        kind="Pod",
+        metadata=metadata,
+        spec=pod_spec,
+    )
+
+    try:
+        response = v1.create_namespaced_pod(namespace=namespace, body=pod)
+        logger.info(f"Pod {pod_name} created in namespace {namespace}")
+        return response
+    except client.exceptions.ApiException as e:
+        logger.error(f"Exception when creating pod: {e}")
+        raise
+
+
+def cleanup_pod(pod_name, namespace="default"):
+
+    v1 = client.CoreV1Api()
+    try:
+        while True:
+            pod_status = v1.read_namespaced_pod_status(
+                name="test-1", namespace="default"
+            )
+            phase = pod_status.status.phase
+            logger.info(f"Pod {pod_name} is in phase: {phase}")
+
+            if phase in ["Succeeded", "Failed"]:
+                logger.info(f"Pod {pod_name} has finished with phase: {phase}")
+                break
+
+            sleep(2)
+
+        v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
+        logger.info(f"Pod {pod_name} deleted successfully.")
+        return True
+    except client.exceptions.ApiException as e:
+        logger.error(f"Exception when monitoring or deleting pod: {e}")
+        raise
+
+
 def be_absent(path):
     path = Path(path)
     if path.is_symlink():
