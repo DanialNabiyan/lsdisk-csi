@@ -95,9 +95,17 @@ def umount_device(dest):
 
 def expand_img(volume_id, size):
     img_path = Path(f"{MOUNT_DEST}/{volume_id}/{IMAGE_NAME}")
-    file_size = os.path.getsize(img_path)
-    if size > file_size:
-        run(f"truncate -s {size} {img_path}")
+    if img_path.exists():
+        file_size = os.path.getsize(img_path)
+        if size > file_size:
+            run(f"truncate -s {size} {img_path}")
+            return True
+        else:
+            raise Exception(
+                f"Image size {file_size} is already larger than requested size {size}."
+            )
+    else:
+        return False
 
 
 def attach_loop(file_path: str) -> str:
