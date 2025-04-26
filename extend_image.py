@@ -16,7 +16,7 @@ mount_dest = os.getenv("MOUNT_DEST")
 disks = find_disk(storage_model=storagemodel)
 for disk in disks:
     logger.info(f"Found disk: {disk}")
-    mount_device(src=disk, dest=mount_dest)
+    mount_device(src=f"/dev/{disk}", dest=mount_dest)
     expand = expand_img(volume_id=volume_id, size=capacity_range)
     logger.info(f"expand img: {expand}")
     umount_device(mount_dest)
