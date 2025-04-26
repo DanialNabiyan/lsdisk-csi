@@ -181,6 +181,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             "VOLUME_ID": request.volume_id,
             "CAPACITY_RANGE": request.capacity_range.required_bytes,
             "MOUNT_DEST": MOUNT_DEST,
+            "IMAGE_NAME": IMAGE_NAME,
         }
         run_pod(
             pod_name=request.volume_id,
