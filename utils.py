@@ -55,7 +55,7 @@ def get_storageclass_from_pv(pvname):
 
 
 def run_pod(
-    pod_name, image, namespace="default", command=None, args=None, env_vars=None
+    pod_name, node, image, namespace="default", command=None, args=None, env_vars=None
 ):
     v1 = client.CoreV1Api()
 
@@ -71,7 +71,12 @@ def run_pod(
         env=env,
     )
 
-    pod_spec = client.V1PodSpec(containers=[container], restart_policy="Never")
+    # Add nodeSelector to specify the node
+    pod_spec = client.V1PodSpec(
+        containers=[container],
+        restart_policy="Never",
+        node_selector={"kubernetes.io/hostname": node},  # Specify the node here
+    )
 
     metadata = client.V1ObjectMeta(name=pod_name)
 

@@ -13,6 +13,7 @@ from lsdisk_utils import (
     mount_bind,
 )
 from utils import (
+    get_node_from_pv,
     get_storageclass_from_pv,
     get_storageclass_storagemodel_param,
     get_node_name,
@@ -161,6 +162,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         logger.info(f"ControllerExpandVolume request for pv {request.volume_id}")
         try:
             storageclass = get_storageclass_from_pv(pvname=request.volume_id)
+            node_name = get_node_from_pv(request.volume_id)
         except ApiException as e:
             if e.status == 404:
                 logger.info(
@@ -183,6 +185,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         run_pod(
             pod_name=request.volume_id,
             image=POD_IMAGE,
+            node=node_name,
             command=["python", "/app/extend_image.py"],
             env_vars=env_vars,
         )
