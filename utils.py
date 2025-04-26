@@ -61,7 +61,7 @@ def run_pod(
 
     env = []
     if env_vars:
-        env = [client.V1EnvVar(name=k, value=v) for k, v in env_vars.items()]
+        env = [client.V1EnvVar(name=k, value=str(v)) for k, v in env_vars.items()]
 
     container = client.V1Container(
         name=pod_name,
