@@ -103,7 +103,7 @@ def cleanup_pod(pod_name, namespace="default"):
     try:
         while True:
             pod_status = v1.read_namespaced_pod_status(
-                name="test-1", namespace="default"
+                name=pod_name, namespace="default"
             )
             phase = pod_status.status.phase
             logger.info(f"Pod {pod_name} is in phase: {phase}")
