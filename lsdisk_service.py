@@ -192,9 +192,10 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         )
         is_deleted = cleanup_pod(pod_name=request.volume_id)
         if is_deleted:
+            logger.info(f"Pod {request.volume_id} is deleted")
             return csi_pb2.ControllerExpandVolumeResponse(
                 capacity_bytes=request.capacity_range.required_bytes,
-                node_expansion_required = True
+                node_expansion_required=True,
             )
         else:
             context.abort(

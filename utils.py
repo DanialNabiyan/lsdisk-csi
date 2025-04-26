@@ -115,7 +115,6 @@ def cleanup_pod(pod_name, namespace="default"):
             sleep(2)
 
         v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
-        logger.info(f"Pod {pod_name} deleted successfully.")
         return True
     except client.exceptions.ApiException as e:
         logger.error(f"Exception when monitoring or deleting pod: {e}")
