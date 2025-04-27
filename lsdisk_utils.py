@@ -139,7 +139,7 @@ def detach_loops(file) -> None:
         
 def find_loop_from_path(path):
     result = run_out(f"findmnt {path}").stdout.decode()
-    output_lines = result.stdout.splitlines()
+    output_lines = result.splitlines()
     data_line = output_lines[1]
     columns = data_line.split()
     source_value = columns[1]
