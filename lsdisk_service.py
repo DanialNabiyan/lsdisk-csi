@@ -302,7 +302,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         volume_path = Path(volume_path).resolve()
         if volume_path.exists():
             logger.info(f"Volume path {volume_path} exists")
-            loop = find_loop_from_path(path=volume_path).stdout.decode()
+            loop = find_loop_from_path(path=volume_path)
             run(f"losetup -c {loop}")
             return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
                 

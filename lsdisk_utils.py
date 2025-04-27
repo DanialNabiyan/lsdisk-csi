@@ -138,7 +138,7 @@ def detach_loops(file) -> None:
         run(f"losetup -d {dev}")
         
 def find_loop_from_path(path):
-    result = run_out(f"findmnt {path}")
+    result = run_out(f"findmnt {path}").stdout.decode()
     output_lines = result.stdout.splitlines()
     data_line = output_lines[1]
     columns = data_line.split()
