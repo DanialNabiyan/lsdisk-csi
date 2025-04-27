@@ -11,6 +11,7 @@ from lsdisk_utils import (
     attach_loop,
     detach_loops,
     mount_bind,
+    find_loop_from_path,
 )
 from utils import (
     get_node_from_pv,
@@ -301,9 +302,10 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         volume_path = Path(volume_path).resolve()
         if volume_path.exists():
             logger.info(f"Volume path {volume_path} exists")
-            run(f"losetup -c {volume_path}")
-            #run(f"resize2fs {volume_path}")
-        return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
+            loop = find_loop_from_path(path=volume_path)
+            run(f"losetup -c {loop}")
+            return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
+                
 
     def NodeGetCapabilities(self, request, context):
         return csi_pb2.NodeGetCapabilitiesResponse(

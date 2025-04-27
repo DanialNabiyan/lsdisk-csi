@@ -136,3 +136,12 @@ def detach_loops(file) -> None:
     devs = attached_loops_dev(file)
     for dev in devs:
         run(f"losetup -d {dev}")
+        
+def find_loop_from_path(path):
+    result = run_out(f"findmnt {path}")
+    if result.returncode == 0:
+        output_lines = result.stdout.splitlines()
+        data_line = output_lines[1]
+        columns = data_line.split()
+        source_value = columns[1]
+        return source_value
