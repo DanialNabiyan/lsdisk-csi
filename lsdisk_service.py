@@ -301,7 +301,8 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         volume_path = Path(volume_path).resolve()
         if volume_path.exists():
             logger.info(f"Volume path {volume_path} exists")
-            run(f"resize2fs {volume_path}")
+            run(f"losetup -c {volume_path}")
+            #run(f"resize2fs {volume_path}")
         return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
 
     def NodeGetCapabilities(self, request, context):
