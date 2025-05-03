@@ -74,7 +74,9 @@ def mount_device(src, dest):
     dest = Path(dest)
     if src.exists() and dest.exists():
         if not check_mounted(dest):
-            run(f"mount {src} {dest}")
+            fs_type = run_out(f"blkid -o value -s TYPE {src}").stdout.decode().strip()
+            if fs_type in ["xfs","ext4"]:
+                run(f"mount {src} {dest}")
     else:
         return
 
