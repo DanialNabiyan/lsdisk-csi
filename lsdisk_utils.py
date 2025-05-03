@@ -9,15 +9,16 @@ logger = get_logger(__name__)
 
 
 def find_disk(storage_model):
-    output = run_out("lsblk -o MODEL,NAME -d").stdout.decode()
+    output = run_out("lsblk -o MODEL,NAME,FSTYPE -d").stdout.decode()
     lines = output.strip().split("\n")[1:]
     result = {}
     for line in lines:
-        parts = line.strip().split(None, 1)
-        if len(parts) < 2:
+        parts = line.strip().split(None, 2)
+        if len(parts) < 3:
             continue
-        model = parts[0]
-        device_name = parts[1]
+        model, device_name, fstype = parts
+        if not fstype or fstype not in ["xfs", "ext4"]:  # Check FSTYPE is not null and is xfs or ext4
+            continue
         if model not in result:
             result[model] = []
         result[model].append(device_name)
