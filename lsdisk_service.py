@@ -141,7 +141,6 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         parameters = request.parameters
         storage_model = parameters.get("storagemodel", "")
         disks = find_disk(storage_model)
-        logger.info(f"disks: {disks}")
         disk = (
             get_device_with_most_free_space(disks)
             if len(disks) > 1
@@ -150,7 +149,6 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         if disk != "":
             mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
             available_capacity = shutil.disk_usage(MOUNT_DEST).free
-            logger.info(f"disk {disk} available_capacity: {available_capacity}")
             umount_device(dest=MOUNT_DEST)
             return csi_pb2.GetCapacityResponse(
                 available_capacity=available_capacity,
