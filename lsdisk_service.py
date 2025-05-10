@@ -99,7 +99,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         logger.info(f"disk: {disk} is selected")
         mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.name}")
         create_img(volume_id=request.name, size=size)
-        umount_device(dest=MOUNT_DEST)
+        umount_device(dest=f"{MOUNT_DEST}/{request.name}")
 
         volume = csi_pb2.Volume(
             volume_id=request.name,
@@ -129,9 +129,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         )
         disks = find_disk(storage_model=storagemodel)
         for disk in disks:
-            mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.name}")
+            mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.volume_id}")
             is_deleted = be_absent(f"{MOUNT_DEST}/{request.volume_id}")
-            umount_device(MOUNT_DEST)
+            umount_device(f"{MOUNT_DEST}/{request.volume_id}")
             if is_deleted:
                 logger.info(f"img file: {request.volume_id} is deleted")
                 break
@@ -243,14 +243,14 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         staging_target_path = request.staging_target_path
         img_file = Path(f"{MOUNT_DEST}/{request.volume_id }/{IMAGE_NAME}")
         for disk in disks:
-            mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.name}")
+            mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.volume_id}")
             if img_file.is_file():
                 loop_file = attach_loop(img_file)
                 mount_device(src=loop_file, dest=staging_target_path)
-                umount_device(MOUNT_DEST)
+                umount_device(f"{MOUNT_DEST}/{request.volume_id}")
                 break
 
-            umount_device(dest=MOUNT_DEST)
+            umount_device(dest=f"{MOUNT_DEST}/{request.volume_id}")
         return csi_pb2.NodeStageVolumeResponse()
 
     def NodeUnstageVolume(self, request, context):
@@ -272,13 +272,13 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         be_absent(staging_path)
         disks = find_disk(storage_model=storagemodel)
         for disk in disks:
-            mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.name}")
+            mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.volume_id}")
             isfile_exist = img_file.is_file()
             if isfile_exist:
                 detach_loops(img_file)
-                umount_device(MOUNT_DEST)
+                umount_device(f"{MOUNT_DEST}/{request.volume_id}")
                 break
-            umount_device(MOUNT_DEST)
+            umount_device(f"{MOUNT_DEST}/{request.volume_id}")
         return csi_pb2.NodeUnstageVolumeResponse()
 
     def NodePublishVolume(self, request, context):

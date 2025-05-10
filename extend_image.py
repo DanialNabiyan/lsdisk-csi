@@ -19,7 +19,7 @@ for disk in disks:
     mount_device(src=f"/dev/{disk}", dest=f"{mount_dest}/{volume_id}")
     expand = expand_img(volume_id=volume_id, size=int(capacity_range))
     logger.info(f"expand img: {expand}")
-    umount_device(mount_dest)
+    umount_device(f"{mount_dest}/{volume_id}")
     if expand:
         logger.info(f"Image {volume_id} extended successfully")
         break
