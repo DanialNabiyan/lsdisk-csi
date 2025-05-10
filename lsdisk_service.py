@@ -125,13 +125,13 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
                 context.abort(grpc.StatusCode.INTERNAL, str(e))
 
         storagemodel = get_storageclass_storagemodel_param(
-            storageclass_name=storageclass
+            storageclass_name=storageclass  
         )
         disks = find_disk(storage_model=storagemodel)
         for disk in disks:
-            mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.volume_id}")
+            mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
             is_deleted = be_absent(f"{MOUNT_DEST}/{request.volume_id}")
-            umount_device(f"{MOUNT_DEST}/{request.volume_id}")
+            umount_device(MOUNT_DEST)
             if is_deleted:
                 logger.info(f"img file: {request.volume_id} is deleted")
                 break
