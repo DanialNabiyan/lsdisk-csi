@@ -97,7 +97,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
                 grpc.StatusCode.RESOURCE_EXHAUSTED, "No disk with specify model found"
             )
         logger.info(f"disk: {disk} is selected")
-        mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
+        mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.name}")
         create_img(volume_id=request.name, size=size)
         umount_device(dest=MOUNT_DEST)
 
@@ -129,7 +129,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         )
         disks = find_disk(storage_model=storagemodel)
         for disk in disks:
-            mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
+            mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.name}")
             is_deleted = be_absent(f"{MOUNT_DEST}/{request.volume_id}")
             umount_device(MOUNT_DEST)
             if is_deleted:
@@ -243,7 +243,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         staging_target_path = request.staging_target_path
         img_file = Path(f"{MOUNT_DEST}/{request.volume_id }/{IMAGE_NAME}")
         for disk in disks:
-            mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
+            mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.name}")
             if img_file.is_file():
                 loop_file = attach_loop(img_file)
                 mount_device(src=loop_file, dest=staging_target_path)
@@ -272,7 +272,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         be_absent(staging_path)
         disks = find_disk(storage_model=storagemodel)
         for disk in disks:
-            mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
+            mount_device(src=f"/dev/{disk}", dest=f"{MOUNT_DEST}/{request.name}")
             isfile_exist = img_file.is_file()
             if isfile_exist:
                 detach_loops(img_file)
