@@ -46,8 +46,11 @@ def get_device_with_most_free_space(devices):
     return device_with_most_space
 
 
-def create_img(volume_id, size):
-    img_file = Path(f"{MOUNT_DEST}/{volume_id}/{IMAGE_NAME}")
+def create_img(path, size):
+    path = Path(path)
+    if not path.exists():
+        path.mkdir()
+    img_file = Path(f"{path}/{IMAGE_NAME}")
     if img_file.is_file():
         return
     run(f"truncate -s {size} {img_file}")
