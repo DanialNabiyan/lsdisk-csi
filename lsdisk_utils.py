@@ -47,10 +47,6 @@ def get_device_with_most_free_space(devices):
 
 
 def create_img(volume_id, size):
-    img_dir = Path(f"{MOUNT_DEST}/{volume_id}")
-    if img_dir.exists():
-        return
-    img_dir.mkdir()
     img_file = Path(f"{MOUNT_DEST}/{volume_id}/{IMAGE_NAME}")
     if img_file.is_file():
         return
@@ -72,6 +68,8 @@ def check_mounted(dest):
 def mount_device(src, dest):
     src = Path(src)
     dest = Path(dest)
+    if not dest.exists():
+        dest.mkdir(exist_ok=True)
     if src.exists() and dest.exists():
         if not check_mounted(dest):
             fs_type = run_out(f"blkid -o value -s TYPE {src}").stdout.decode().strip()
