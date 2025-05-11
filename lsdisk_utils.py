@@ -68,6 +68,8 @@ def check_mounted(dest):
     is_mounted = run_out(f"mount | grep {dest}").stdout.decode()
     return bool(is_mounted)
 
+def find_fstype(src):
+    return run_out(f"blkid -o value -s TYPE {src}").stdout.decode().strip()
 
 def mount_device(src, dest):
     src = Path(src)
@@ -76,7 +78,7 @@ def mount_device(src, dest):
         dest.mkdir(exist_ok=True)
     if src.exists() and dest.exists():
         if not check_mounted(dest):
-            fs_type = run_out(f"blkid -o value -s TYPE {src}").stdout.decode().strip()
+            fs_type = find_fstype(src)
             if fs_type in ["xfs", "ext4"]:
                 run(f"mount {src} {dest}")
 
@@ -140,12 +142,13 @@ def detach_loops(file) -> None:
 
 
 def find_loop_from_path(path):
-    result = run_out(f"findmnt {path}").stdout.decode()
-    output_lines = result.splitlines()
-    data_line = output_lines[1]
-    columns = data_line.split()
-    source_value = columns[1]
-    return source_value
+    res = run_out(
+        f"findmnt --json --first-only --nofsroot --mountpoint {path}"
+    )
+    if res.returncode != 0:
+        return None
+    data = json.loads(res.stdout.decode().strip())
+    return data["filesystems"][0]["source"]
 
 
 def path_stats(path):
@@ -156,3 +159,13 @@ def path_stats(path):
         "fs_files": fs_stat.f_files,
         "fs_files_avail": fs_stat.f_favail,
     }
+
+def extend_fs(path):
+    path = Path(path).resolve()
+    fstype = find_fstype(path)
+    if fstype == "ext4":
+        run(f"resize2fs {path}")
+    elif fstype == "xfs":
+        run(f"xfs_growfs -d {path}")
+    else:
+        raise Exception(f"Unsupported fsType: {fstype}")
