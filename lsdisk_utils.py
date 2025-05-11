@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import shutil
@@ -144,3 +145,19 @@ def find_loop_from_path(path):
     columns = data_line.split()
     source_value = columns[1]
     return source_value
+
+def mountpoint_to_dev(mountpoint):
+    res = run_out(
+        f"findmnt --json --first-only --nofsroot --mountpoint {mountpoint}",
+    )
+    if res.returncode != 0:
+        return None
+    data = json.loads(res.stdout.decode().strip())
+    return data["filesystems"][0]["source"]
+
+def device_stats(dev):
+    output = run_out(
+        f"blockdev --getsize64 {dev}"
+    ).stdout.decode()
+    dev_size = int(output)
+    return {"dev_size": dev_size}

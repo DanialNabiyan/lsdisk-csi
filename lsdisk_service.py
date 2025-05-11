@@ -3,10 +3,12 @@ import grpc
 from csi import csi_pb2_grpc, csi_pb2
 from google.protobuf.wrappers_pb2 import BoolValue
 from lsdisk_utils import (
+    device_stats,
     find_disk,
     get_device_with_most_free_space,
     create_img,
     mount_device,
+    mountpoint_to_dev,
     umount_device,
     attach_loop,
     detach_loops,
@@ -316,6 +318,22 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             run(f"losetup -c {loop}")
             return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
 
+    def NodeGetVolumeStats(self, request, context):
+        logger.info(f"NodeGetVolumeStats request for pv {request.volume_id}")
+        volume_path = request.volume_path
+        logger.info(f"Volume path: {volume_path}")
+        logger.info(f"staging target path: {request.staging_target_path}")
+        dev = mountpoint_to_dev(volume_path)
+        stats = device_stats(dev=dev)
+        return csi_pb2.NodeGetVolumeStatsResponse(
+            usage=[
+                csi_pb2.VolumeUsage(
+                    total=stats["dev_size"],
+                    unit=csi_pb2.VolumeUsage.Unit.BYTES,
+                ),
+            ]
+        )
+
     def NodeGetCapabilities(self, request, context):
         return csi_pb2.NodeGetCapabilitiesResponse(
             capabilities=[
@@ -327,6 +345,11 @@ class NodeService(csi_pb2_grpc.NodeServicer):
                 csi_pb2.NodeServiceCapability(
                     rpc=csi_pb2.NodeServiceCapability.RPC(
                         type=csi_pb2.NodeServiceCapability.RPC.EXPAND_VOLUME
+                    )
+                ),
+                csi_pb2.NodeServiceCapability(
+                    rpc=csi_pb2.NodeServiceCapability.RPC(
+                        type=csi_pb2.NodeServiceCapability.RPC.GET_VOLUME_STATS
                     )
                 ),
             ]
