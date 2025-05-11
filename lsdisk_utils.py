@@ -77,7 +77,7 @@ def mount_device(src, dest):
     if src.exists() and dest.exists():
         if not check_mounted(dest):
             fs_type = run_out(f"blkid -o value -s TYPE {src}").stdout.decode().strip()
-            if fs_type in ["xfs","ext4"]:
+            if fs_type in ["xfs", "ext4"]:
                 run(f"mount {src} {dest}")
 
 
@@ -137,7 +137,8 @@ def detach_loops(file) -> None:
     devs = attached_loops_dev(file)
     for dev in devs:
         run(f"losetup -d {dev}")
-        
+
+
 def find_loop_from_path(path):
     result = run_out(f"findmnt {path}").stdout.decode()
     output_lines = result.splitlines()
@@ -146,18 +147,12 @@ def find_loop_from_path(path):
     source_value = columns[1]
     return source_value
 
-def mountpoint_to_dev(mountpoint):
-    res = run_out(
-        f"findmnt --json --first-only --nofsroot --mountpoint {mountpoint}",
-    )
-    if res.returncode != 0:
-        return None
-    data = json.loads(res.stdout.decode().strip())
-    return data["filesystems"][0]["source"]
 
-def device_stats(dev):
-    output = run_out(
-        f"blockdev --getsize64 {dev}"
-    ).stdout.decode()
-    dev_size = int(output)
-    return {"dev_size": dev_size}
+def path_stats(path):
+    fs_stat = os.statvfs(path)
+    return {
+        "fs_size": fs_stat.f_frsize * fs_stat.f_blocks,
+        "fs_avail": fs_stat.f_frsize * fs_stat.f_bavail,
+        "fs_files": fs_stat.f_files,
+        "fs_files_avail": fs_stat.f_favail,
+    }

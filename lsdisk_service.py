@@ -3,12 +3,11 @@ import grpc
 from csi import csi_pb2_grpc, csi_pb2
 from google.protobuf.wrappers_pb2 import BoolValue
 from lsdisk_utils import (
-    device_stats,
     find_disk,
     get_device_with_most_free_space,
     create_img,
     mount_device,
-    mountpoint_to_dev,
+    path_stats,
     umount_device,
     attach_loop,
     detach_loops,
@@ -319,15 +318,21 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
 
     def NodeGetVolumeStats(self, request, context):
-        logger.info(f"NodeGetVolumeStats request for pv {request.volume_id}")
         volume_path = request.volume_path
-        dev = mountpoint_to_dev(volume_path)
-        stats = device_stats(dev=dev)
+        stats = path_stats(volume_path)
         return csi_pb2.NodeGetVolumeStatsResponse(
             usage=[
                 csi_pb2.VolumeUsage(
-                    total=stats["dev_size"],
+                    available=stats["fs_avail"],
+                    total=stats["fs_size"],
+                    used=stats["fs_size"] - stats["fs_avail"],
                     unit=csi_pb2.VolumeUsage.Unit.BYTES,
+                ),
+                csi_pb2.VolumeUsage(
+                    available=stats["fs_files_avail"],
+                    total=stats["fs_files"],
+                    used=stats["fs_files"] - stats["fs_files_avail"],
+                    unit=csi_pb2.VolumeUsage.Unit.INODES,
                 ),
             ]
         )
