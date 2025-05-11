@@ -80,9 +80,6 @@ def mount_device(src, dest):
             if fs_type in ["xfs","ext4"]:
                 run(f"mount {src} {dest}")
                 logger.info(f"dest : {dest} is mounted to {src}")
-                
-    else:
-        return
 
 
 def mount_bind(src, dest):
@@ -91,8 +88,6 @@ def mount_bind(src, dest):
     if src.exists():
         dest.mkdir(parents=True, exist_ok=True)
         run(f"mount --bind {src} {dest}")
-    else:
-        return
 
 
 def umount_device(dest):

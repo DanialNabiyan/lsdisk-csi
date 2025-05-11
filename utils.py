@@ -69,7 +69,9 @@ def run_pod(
         command=command,
         args=args,
         env=env,
-        security_context=client.V1SecurityContext(privileged=True),  # Add securityContext here
+        security_context=client.V1SecurityContext(
+            privileged=True
+        ),  # Add securityContext here
     )
 
     # Add nodeSelector to specify the node

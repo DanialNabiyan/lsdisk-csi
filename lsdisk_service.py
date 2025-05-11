@@ -59,18 +59,18 @@ class IdentityService(csi_pb2_grpc.IdentityServicer):
             ]
         )
 
-    # The primary utility of the Probe RPC is to verify that the plugin is in a healthy and ready state.
-    # If an unhealthy state is reported, via a non-success response
     def Probe(self, request, context):
+        # Verifies the plugin is in a healthy and ready state
         return csi_pb2.ProbeResponse(ready=BoolValue(value=True))
 
 
 class ControllerService(csi_pb2_grpc.ControllerServicer):
-
     def CreateVolume(self, request, context):
         logger.info(f"CreateVolume request for pv {request.name}")
         volume_capability = request.volume_capabilities[0]
         AccessModeEnum = csi_pb2.VolumeCapability.AccessMode.Mode
+
+        # Validate access mode
         if volume_capability.access_mode.mode not in [
             AccessModeEnum.SINGLE_NODE_WRITER
         ]:
@@ -78,6 +78,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
                 grpc.StatusCode.INVALID_ARGUMENT,
                 f"Unsupported access mode: {AccessModeEnum.Name(volume_capability.access_mode.mode)}",
             )
+
         parameters = request.parameters
         node_name = request.accessibility_requirements.preferred[0].segments[
             NODE_NAME_TOPOLOGY_KEY
@@ -85,19 +86,24 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         MIN_SIZE = 16 * 1024 * 1024  # 16MiB
         size = max(MIN_SIZE, request.capacity_range.required_bytes)
         storage_model = parameters.get("storagemodel", "")
-        logger.info(f"storage model: {storage_model}")
+        logger.info(f"Storage model: {storage_model}")
+
+        # Find and select disk
         disks = find_disk(storage_model)
         disk = (
             get_device_with_most_free_space(disks)
             if len(disks) > 1
             else disks[0] if disks else ""
         )
-        if disk == "":
+        if not disk:
             context.abort(
-                grpc.StatusCode.RESOURCE_EXHAUSTED, "No disk with specify model found"
+                grpc.StatusCode.RESOURCE_EXHAUSTED, "No disk with specified model found"
             )
-        logger.info(f"disk: {disk} is selected")
+
+        logger.info(f"Selected disk: {disk}")
         path = Path(f"{MOUNT_DEST}/{storage_model}-{request.name}")
+
+        # Create and mount volume
         mount_device(src=f"/dev/{disk}", dest=path)
         create_img(path=f"{path}/{request.name}", size=size)
         umount_device(dest=path)
@@ -126,39 +132,38 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
                 context.abort(grpc.StatusCode.INTERNAL, str(e))
 
         storagemodel = get_storageclass_storagemodel_param(
-            storageclass_name=storageclass  
+            storageclass_name=storageclass
         )
         disks = find_disk(storage_model=storagemodel)
+
         for disk in disks:
             mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
             is_deleted = be_absent(f"{MOUNT_DEST}/{request.volume_id}")
             umount_device(MOUNT_DEST)
             if is_deleted:
-                logger.info(f"img file: {request.volume_id} is deleted")
+                logger.info(f"Image file {request.volume_id} deleted")
                 break
+
         return csi_pb2.DeleteVolumeResponse()
 
     def GetCapacity(self, request, context):
         parameters = request.parameters
         storage_model = parameters.get("storagemodel", "")
         disks = find_disk(storage_model)
+
         disk = (
             get_device_with_most_free_space(disks)
             if len(disks) > 1
             else disks[0] if disks else ""
         )
-        if disk != "":
+        if disk:
             mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
             available_capacity = shutil.disk_usage(MOUNT_DEST).free
             umount_device(dest=MOUNT_DEST)
-            return csi_pb2.GetCapacityResponse(
-                available_capacity=available_capacity,
-            )
         else:
             available_capacity = 0
-            return csi_pb2.GetCapacityResponse(
-                available_capacity=available_capacity,
-            )
+
+        return csi_pb2.GetCapacityResponse(available_capacity=available_capacity)
 
     def ControllerExpandVolume(self, request, context):
         logger.info(f"ControllerExpandVolume request for pv {request.volume_id}")
@@ -185,6 +190,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             "MOUNT_DEST": MOUNT_DEST,
             "IMAGE_NAME": IMAGE_NAME,
         }
+
         run_pod(
             pod_name=request.volume_id,
             image=POD_IMAGE,
@@ -193,8 +199,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             env_vars=env_vars,
         )
         is_deleted = cleanup_pod(pod_name=request.volume_id)
+
         if is_deleted:
-            logger.info(f"Pod {request.volume_id} is deleted")
+            logger.info(f"Pod {request.volume_id} deleted")
             return csi_pb2.ControllerExpandVolumeResponse(
                 capacity_bytes=request.capacity_range.required_bytes,
                 node_expansion_required=True,
@@ -202,7 +209,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         else:
             context.abort(
                 grpc.StatusCode.RESOURCE_EXHAUSTED,
-                "No disk with specify model found",
+                "No disk with specified model found",
             )
 
     def ControllerGetCapabilities(self, request, context):
@@ -308,7 +315,6 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             loop = find_loop_from_path(path=volume_path)
             run(f"losetup -c {loop}")
             return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
-                
 
     def NodeGetCapabilities(self, request, context):
         return csi_pb2.NodeGetCapabilitiesResponse(
