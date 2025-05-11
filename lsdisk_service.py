@@ -3,6 +3,7 @@ import grpc
 from csi import csi_pb2_grpc, csi_pb2
 from google.protobuf.wrappers_pb2 import BoolValue
 from lsdisk_utils import (
+    extend_fs,
     find_disk,
     get_device_with_most_free_space,
     create_img,
@@ -314,7 +315,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         if volume_path.exists():
             logger.info(f"Volume path {volume_path} exists")
             loop = find_loop_from_path(path=volume_path)
-            run(f"losetup -c {loop}")
+            extend_fs(path=loop)
             return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
 
     def NodeGetVolumeStats(self, request, context):
