@@ -321,8 +321,6 @@ class NodeService(csi_pb2_grpc.NodeServicer):
     def NodeGetVolumeStats(self, request, context):
         logger.info(f"NodeGetVolumeStats request for pv {request.volume_id}")
         volume_path = request.volume_path
-        logger.info(f"Volume path: {volume_path}")
-        logger.info(f"staging target path: {request.staging_target_path}")
         dev = mountpoint_to_dev(volume_path)
         stats = device_stats(dev=dev)
         return csi_pb2.NodeGetVolumeStatsResponse(
