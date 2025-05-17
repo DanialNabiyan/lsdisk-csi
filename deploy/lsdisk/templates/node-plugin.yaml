@@ -44,7 +44,6 @@ spec:
             - configMapRef:
                 name: {{ .Chart.Name }}
           env:
-            env:
             - name: TZ
               value: {{ .Values.timezone | quote }}
             - name: PROVISIONER_NAME
