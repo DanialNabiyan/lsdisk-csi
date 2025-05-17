@@ -9,12 +9,12 @@ spec:
       maxUnavailable: "100%"
   selector:
     matchLabels:
-      {{ include "lsdisk.labels" . | indent 6 }}
+{{ include "lsdisk.labels" . | indent 6 }}
       component: node
   template:
     metadata:
       labels:
-        {{ include "lsdisk.labels" . | indent 8 }}
+{{ include "lsdisk.labels" . | indent 8 }}
         component: node
     spec:
       serviceAccountName: {{ .Chart.Name }}-driver

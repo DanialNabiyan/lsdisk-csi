@@ -8,12 +8,12 @@ spec:
   serviceName: {{ .Chart.Name }}-driver
   selector:
     matchLabels:
-      {{ include "lsdisk.labels" . | indent 6 }}
+{{ include "lsdisk.labels" . | indent 6 }}
       component: controller
   template:
     metadata:
       labels:
-        {{ include "lsdisk.labels" . | indent 8 }}
+{{ include "lsdisk.labels" . | indent 8 }}
         component: controller
     spec:
       serviceAccountName: {{ .Chart.Name }}-driver
