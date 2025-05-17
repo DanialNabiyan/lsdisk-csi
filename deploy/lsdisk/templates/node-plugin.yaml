@@ -1,24 +1,23 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: lsdisk-node
+  name: {{ .Chart.Name }}-node
+  namespace: {{ .Release.Namespace }}
 spec:
   updateStrategy:
     rollingUpdate:
       maxUnavailable: "100%"
   selector:
-    matchLabels: 
-      app.kubernetes.io/instance: lsdisk
-      app.kubernetes.io/name: lsdisk
+    matchLabels:
+{{ include "lsdisk.labels" . | indent 6 }}
       component: node
   template:
     metadata:
-      labels: 
-        app.kubernetes.io/instance: lsdisk
-        app.kubernetes.io/name: lsdisk
+      labels:
+{{ include "lsdisk.labels" . | indent 8 }}
         component: node
     spec:
-      serviceAccount: lsdisk-driver
+      serviceAccount: {{ .Chart.Name }}-driver
       priorityClassName: system-node-critical
       tolerations:
         - operator: "Exists"
@@ -37,13 +36,18 @@ spec:
             type: DirectoryOrCreate
       containers:
         - name: csi-driver
-          image: danialnabiyan1382/lsdisk:v1.0.0.10
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
             privileged: true
+          envFrom:
+            - configMapRef:
+                name: {{ .Chart.Name }}
           env:
+            - name: TZ
+              value: {{ .Values.timezone | quote }}
             - name: PROVISIONER_NAME
-              value: lsdisk.driver
+              value: {{ .Values.provisionerName | quote }}
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: NODE_NAME
@@ -61,15 +65,10 @@ spec:
               mountPath: /var/lib/kubelet
               mountPropagation: "Bidirectional"
           resources:
-            limits:
-              cpu: "1"
-              memory: 100Mi
-            requests:
-              cpu: 10m
-              memory: 100Mi
+{{- toYaml .Values.resources | nindent 12 }}
         - name: node-driver-registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.2.0
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.registrarImage }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - --csi-address=$(ADDRESS)
             - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
@@ -94,15 +93,10 @@ spec:
             - name: registration-dir
               mountPath: /registration
           resources:
-            limits:
-              cpu: 500m
-              memory: 100Mi
-            requests:
-              cpu: 10m
-              memory: 100Mi
+{{- toYaml .Values.resources | nindent 12 }}
         - name: external-provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v2.2.2
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.provisionerImage }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
             - "--feature-gates=Topology=true"

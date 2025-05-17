@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}-controller
+  namespace: {{ .Release.Namespace}}
+  labels:
+{{ include "lsdisk.labels" . | indent 4 }}
+    component: controller
+spec:
+  type: ClusterIP
+  selector:
+{{ include "lsdisk.labels" . | indent 4 }}
+    component: controller
+  clusterIP: None
