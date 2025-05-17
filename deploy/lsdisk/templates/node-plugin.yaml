@@ -17,7 +17,7 @@ spec:
 {{ include "lsdisk.labels" . | indent 8 }}
         component: node
     spec:
-      serviceAccountName: {{ .Chart.Name }}-driver
+      serviceAccount: {{ .Chart.Name }}-driver
       priorityClassName: system-node-critical
       tolerations:
         - operator: "Exists"
@@ -44,25 +44,32 @@ spec:
             - configMapRef:
                 name: {{ .Chart.Name }}
           env:
+            env:
             - name: TZ
               value: {{ .Values.timezone | quote }}
             - name: PROVISIONER_NAME
-              value: {{ .Values.provisionerName }}
+              value: {{ .Values.provisionerName | quote }}
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
+                  apiVersion: v1
                   fieldPath: spec.nodeName
+          ports:
+            - name: csi-probe
+              containerPort: 9808
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
             - name: mountpoint-dir
               mountPath: /var/lib/kubelet
               mountPropagation: "Bidirectional"
+          resources:
+{{- toYaml .Values.resources | nindent 12 }}
         - name: node-driver-registrar
           image: {{ .Values.registrarImage }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - --csi-address=$(ADDRESS)
             - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
@@ -72,14 +79,25 @@ spec:
               value: /csi/csi.sock
             - name: DRIVER_REG_SOCK_PATH
               value: /var/lib/kubelet/plugins/lsdisk/csi.sock
+          ports:
+            - containerPort: 9809
+              name: healthz
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
             - name: registration-dir
               mountPath: /registration
+          resources:
+{{- toYaml .Values.resources | nindent 12 }}
         - name: external-provisioner
           image: {{ .Values.provisionerImage }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
             - "--feature-gates=Topology=true"
@@ -87,7 +105,7 @@ spec:
             - "--immediate-topology=false"
             - "--timeout=120s"
             - "--enable-capacity=true"
-            - "--capacity-ownerref-level=1"
+            - "--capacity-ownerref-level=1" # DaemonSet
             - "--node-deployment=true"
           env:
             - name: ADDRESS

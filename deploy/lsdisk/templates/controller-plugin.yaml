@@ -16,7 +16,7 @@ spec:
 {{ include "lsdisk.labels" . | indent 8 }}
         component: controller
     spec:
-      serviceAccountName: {{ .Chart.Name }}-driver
+      serviceAccount: {{ .Chart.Name }}-driver
       priorityClassName: system-cluster-critical
       tolerations:
         - key: "node-role.kubernetes.io/master"
@@ -41,13 +41,15 @@ spec:
               value: unix:///csi/csi.sock
           envFrom:
             - configMapRef:
-                name: lsdisk
+                name: {{ .Chart.Name }}
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
           ports:
             - name: csi-probe
               containerPort: 9808
+          resources:
+{{- toYaml .Values.resources | nindent 12 }}
         - name: external-resizer
           image: {{ .Values.resizerImage }}
           imagePullPolicy: IfNotPresent

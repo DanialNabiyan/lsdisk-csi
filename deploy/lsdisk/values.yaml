@@ -10,3 +10,10 @@ timezone: Asia/Tehran
 configMap:
   IMAGE_NAME: "disk.img"
   MOUNT_DEST: "/mnt"
+resources:
+  limits:
+    cpu: "1"
+    memory: 100Mi
+  requests:
+    cpu: 10m
+    memory: 100Mi
