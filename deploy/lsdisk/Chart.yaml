@@ -4,3 +4,4 @@ description: A Helm chart for the lsdisk CSI driver
 type: application
 version: 1.0.0
 appVersion: "v1.0.0"
+icon: https://raw.githubusercontent.com/danialnabiyan/lsdisk-csi/main/deploy/lsdisk/files/icon.png
