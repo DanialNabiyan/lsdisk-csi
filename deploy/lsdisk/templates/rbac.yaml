@@ -50,6 +50,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: {{ .Chart.Name }}-driver
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: {{ .Chart.Name }}-provisioner
@@ -74,6 +75,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: {{ .Chart.Name }}-driver
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: {{ .Chart.Name }}-broker
@@ -110,6 +112,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: {{ .Chart.Name }}-driver
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: {{ .Chart.Name }}-resizer
