@@ -1,24 +1,23 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: lsdisk-node
+  name: {{ .Chart.Name }}-node
+  namespace: {{ .Release.Namespace }}
 spec:
   updateStrategy:
     rollingUpdate:
       maxUnavailable: "100%"
   selector:
     matchLabels:
-      app.kubernetes.io/instance: lsdisk
-      app.kubernetes.io/name: lsdisk
+      {{ include "lsdisk.labels" . | indent 6 }}
       component: node
   template:
     metadata:
       labels:
-        app.kubernetes.io/instance: lsdisk
-        app.kubernetes.io/name: lsdisk
+        {{ include "lsdisk.labels" . | indent 8 }}
         component: node
     spec:
-      serviceAccount: lsdisk-driver
+      serviceAccountName: {{ .Chart.Name }}-driver
       priorityClassName: system-node-critical
       tolerations:
         - operator: "Exists"
@@ -37,43 +36,32 @@ spec:
             type: DirectoryOrCreate
       containers:
         - name: csi-driver
-          image: danialnabiyan1382/lsdisk:v1.0.0.47
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
             privileged: true
           envFrom:
             - configMapRef:
-                name: lsdisk
+                name: {{ .Chart.Name }}
           env:
             - name: TZ
-              value: "Asia/Tehran"
+              value: {{ .Values.timezone | quote }}
             - name: PROVISIONER_NAME
-              value: lsdisk.driver
+              value: {{ .Values.provisionerName }}
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
-                  apiVersion: v1
                   fieldPath: spec.nodeName
-          ports:
-            - name: csi-probe
-              containerPort: 9808
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
             - name: mountpoint-dir
               mountPath: /var/lib/kubelet
               mountPropagation: "Bidirectional"
-          resources:
-            limits:
-              cpu: "1"
-              memory: 100Mi
-            requests:
-              cpu: 10m
-              memory: 100Mi
         - name: node-driver-registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
+          image: {{ .Values.registrarImage }}
           imagePullPolicy: IfNotPresent
           args:
             - --csi-address=$(ADDRESS)
@@ -84,29 +72,13 @@ spec:
               value: /csi/csi.sock
             - name: DRIVER_REG_SOCK_PATH
               value: /var/lib/kubelet/plugins/lsdisk/csi.sock
-          ports:
-            - containerPort: 9809
-              name: healthz
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: healthz
-            initialDelaySeconds: 5
-            timeoutSeconds: 5
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
             - name: registration-dir
               mountPath: /registration
-          resources:
-            limits:
-              cpu: 500m
-              memory: 100Mi
-            requests:
-              cpu: 10m
-              memory: 100Mi
         - name: external-provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
+          image: {{ .Values.provisionerImage }}
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -115,7 +87,7 @@ spec:
             - "--immediate-topology=false"
             - "--timeout=120s"
             - "--enable-capacity=true"
-            - "--capacity-ownerref-level=1" # DaemonSet
+            - "--capacity-ownerref-level=1"
             - "--node-deployment=true"
           env:
             - name: ADDRESS

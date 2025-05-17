@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: lsdisk
-data:
-  IMAGE_NAME: "disk.img"
-  MOUNT_DEST: "/mnt"
