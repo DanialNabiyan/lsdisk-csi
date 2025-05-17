@@ -1,10 +1,10 @@
 image:
-  repository: docker.mci.dev/danialnabiyan1382/lsdisk
+  repository: danialnabiyan1382/lsdisk
   tag: v1.0.0.111
   pullPolicy: IfNotPresent
-resizerImage: docker.mci.dev/registry.k8s.io/sig-storage/csi-resizer:v1.9.0
-registrarImage: docker.mci.dev/registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
-provisionerImage: docker.mci.dev/registry.k8s.io/sig-storage/csi-provisioner:v5.0.2
+resizerImage: registry.k8s.io/sig-storage/csi-resizer:v1.9.0
+registrarImage: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
+provisionerImage: registry.k8s.io/sig-storage/csi-provisioner:v5.0.2
 provisionerName: lsdisk.driver
 timezone: Asia/Tehran
 configMap:
