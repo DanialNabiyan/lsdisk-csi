@@ -1,6 +1,6 @@
 image:
   repository: danialnabiyan1382/lsdisk
-  tag: v1.0.0.111
+  tag: v1.0.0.112
   pullPolicy: IfNotPresent
 resizerImage: registry.k8s.io/sig-storage/csi-resizer:v1.9.0
 registrarImage: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
