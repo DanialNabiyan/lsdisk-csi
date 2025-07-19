@@ -32,13 +32,14 @@ def get_device_with_most_free_space(devices):
     for device in devices:
         device_path = f"/dev/{device}"
         try:
-            mount_device(src=device_path, dest=MOUNT_DEST)
-            usage = shutil.disk_usage(MOUNT_DEST)
+            path = f"{MOUNT_DEST}/{device}"
+            mount_device(src=device_path, dest=path)
+            usage = shutil.disk_usage(path)
             free_space = usage.free
             if free_space > max_free_space:
                 max_free_space = free_space
                 device_with_most_space = device
-            umount_device(dest=MOUNT_DEST)
+            umount_device(dest=path)
         except FileNotFoundError:
             logger.warning(f"Device {device_path} not found or inaccessible.")
         except Exception as e:
