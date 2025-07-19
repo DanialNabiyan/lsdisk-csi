@@ -160,9 +160,10 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             else disks[0] if disks else ""
         )
         if disk:
-            mount_device(src=f"/dev/{disk}", dest=MOUNT_DEST)
-            available_capacity = shutil.disk_usage(MOUNT_DEST).free
-            umount_device(dest=MOUNT_DEST)
+            path = f"{MOUNT_DEST}/{disk}"
+            mount_device(src=f"/dev/{disk}", dest=path)
+            available_capacity = shutil.disk_usage(path).free
+            umount_device(dest=path)
         else:
             available_capacity = 0
 
