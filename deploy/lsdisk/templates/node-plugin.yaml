@@ -46,8 +46,6 @@ spec:
           env:
             - name: TZ
               value: {{ .Values.timezone | quote }}
-            - name: PROVISIONER_NAME
-              value: {{ .Values.provisionerName | quote }}
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: NODE_NAME

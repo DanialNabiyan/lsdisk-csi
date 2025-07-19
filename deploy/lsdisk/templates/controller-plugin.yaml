@@ -35,8 +35,6 @@ spec:
               value: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             - name: TZ
               value: {{ .Values.timezone | quote }}
-            - name: PROVISIONER_NAME
-              value: {{ .Values.provisionerName | quote }}
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
           envFrom:

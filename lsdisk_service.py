@@ -25,7 +25,7 @@ from utils import (
     run_pod,
     cleanup_pod,
 )
-from constance.config import IMAGE_NAME, MOUNT_DEST, POD_IMAGE, PROVISIONER_NAME
+from constance.config import IMAGE_NAME, MOUNT_DEST, POD_IMAGE
 from pathlib import Path
 from logger import get_logger
 from kubernetes.client.exceptions import ApiException
@@ -37,7 +37,7 @@ NODE_NAME_TOPOLOGY_KEY = "hostname"
 class IdentityService(csi_pb2_grpc.IdentityServicer):
     def GetPluginInfo(self, request, context):
         return csi_pb2.GetPluginInfoResponse(
-            name={PROVISIONER_NAME}, vendor_version="1.0.0"
+            name="lsdisk.driver", vendor_version="1.0.0"
         )
 
     def GetPluginCapabilities(self, request, context):
