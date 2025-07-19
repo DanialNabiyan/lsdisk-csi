@@ -82,7 +82,7 @@ def mount_device(src, dest):
             if fs_type in ["xfs", "ext4"]:
                 run(f"mount {src} {dest}")
             elif fs_type == "":
-                run(f"mkfs.xfs {src}")
+                run(f"mkfs.xfs -f {src}")
                 run(f"mount {src} {dest}")
             else:
                 raise TypeError("Only FsType xfs and ext4 valid!")
