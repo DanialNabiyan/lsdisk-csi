@@ -7,11 +7,7 @@ from logger import get_logger
 from constance.config import MOUNT_DEST, IMAGE_NAME
 
 logger = get_logger(__name__)
-
-
-def select_full_disk_option(disks):
     
-
 
 def find_disk(storage_model):
     output = run_out("lsblk -o MODEL,NAME -d").stdout.decode()
@@ -59,10 +55,10 @@ def get_device_with_most_free_space(devicesو full_disk):
             mount_device(src=device_path, dest=path)
             usage = shutil.disk_usage(path)
             free_space = usage.free
-            if full_disk.lower() == "true" and free_space > max_free_space:
+            if full_disk.lower() == "true" and free_space > max_free_space and usage.total == free_space:
                 max_free_space = free_space
                 device_with_most_space = device
-            elif free_space > max_free_space:
+            elif full_disk.lower() != "true" free_space > max_free_space:
                 max_free_space = free_space
                 device_with_most_space = device
             umount_device(dest=path)
