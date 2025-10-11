@@ -102,6 +102,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         if full_disk.lower() == "true":
             disk = (
                 get_full_free_spaces(disks, size)
+            )
         else:
             disk = (
                  get_device_with_most_free_space(disks)
