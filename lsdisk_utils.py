@@ -9,7 +9,11 @@ from constance.config import MOUNT_DEST, IMAGE_NAME
 logger = get_logger(__name__)
 
 
-def find_disk(storage_model, full_disk):
+def select_full_disk_option(disks):
+    
+
+
+def find_disk(storage_model):
     output = run_out("lsblk -o MODEL,NAME -d").stdout.decode()
     lines = output.strip().split("\n")[1:]
     result = {}
@@ -25,7 +29,7 @@ def find_disk(storage_model, full_disk):
     return result.get(storage_model, [])
 
 
-def find_RAID_disks(storage_model, disk_type, full_disk):
+def find_RAID_disks(storage_model, disk_type):
     disk_type_number = if disk_type == "HDD" else 0
     output = run_out("lsblk -o MODEL,NAME,ROTA -d").stdout.decode()
     lines = output.strip().split("\n")[1:]
@@ -38,14 +42,13 @@ def find_RAID_disks(storage_model, disk_type, full_disk):
         device_name = parts[1]
         dtype = parts[2]
         if model not in result:
-            result[model] = []
-        
+            result[model] = []        
         if dtype == disk_type_number:
             result[model].append(device_name)
     return result.get(storage_model, [])
 
 
-def get_device_with_most_free_space(devices):
+def get_device_with_most_free_space(devicesو full_disk):
     max_free_space = 0
     device_with_most_space = None
 
@@ -56,7 +59,10 @@ def get_device_with_most_free_space(devices):
             mount_device(src=device_path, dest=path)
             usage = shutil.disk_usage(path)
             free_space = usage.free
-            if free_space > max_free_space:
+            if full_disk.lower() == "true" and free_space > max_free_space:
+                max_free_space = free_space
+                device_with_most_space = device
+            elif free_space > max_free_space:
                 max_free_space = free_space
                 device_with_most_space = device
             umount_device(dest=path)
@@ -64,7 +70,9 @@ def get_device_with_most_free_space(devices):
             logger.warning(f"Device {device_path} not found or inaccessible.")
         except Exception as e:
             logger.error(f"Error checking free space for device {device_path}: {e}")
-
+    if device_with_most_space is None:
+        logger.error("No valid devices found with free space.")
+        return ""
     return device_with_most_space
 
 

@@ -96,13 +96,11 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
 
         # Find and select disk
         if storage_model.startswith("LOGICAL"):
-            disks = find_RAID_disks(storage_model, disk_type, full_disk)
+            disks = find_RAID_disks(storage_model, disk_type)
         else:
-            disks = find_disk(storage_model, full_disk)
+            disks = find_disk(storage_model)
         disk = (
-            get_device_with_most_free_space(disks)
-            if len(disks) > 1
-            else disks[0] if disks else ""
+            get_device_with_most_free_space(disks, full_disk=full_disk)
         )
         if not disk:
             context.abort(
@@ -114,6 +112,10 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
 
         # Create and mount volume
         mount_device(src=f"/dev/{disk}", dest=path)
+        if full_disk.lower() == "true":
+            usage = shutil.disk_usage(path)
+            size = usage.free
+            logger.info(f"Using full disk size: {size} bytes")
         create_img(path=f"{path}/{request.name}", size=size)
         umount_device(dest=path)
 
