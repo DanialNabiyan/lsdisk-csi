@@ -99,9 +99,13 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             disks = find_RAID_disks(storage_model, disk_type)
         else:
             disks = find_disk(storage_model)
-        disk = (
-            get_device_with_most_free_space(disks, full_disk=full_disk)
-        )
+        if full_disk.lower() == "true":
+            disk = (
+                get_full_free_spaces(disks, size)
+        else:
+            disk = (
+                 get_device_with_most_free_space(disks)
+            )
         if not disk:
             context.abort(
                 grpc.StatusCode.RESOURCE_EXHAUSTED, "No disk with specified model found"

@@ -43,9 +43,9 @@ def find_RAID_disks(storage_model, disk_type):
             result[model].append(device_name)
     return result.get(storage_model, [])
 
-
-def get_device_with_most_free_space(devicesو full_disk):
-    max_free_space = 0
+def get_full_free_spaces(devices, size):
+    flag_first_valid_data = false
+    min_free_space = 0
     device_with_most_space = None
 
     for device in devices:
@@ -55,10 +55,38 @@ def get_device_with_most_free_space(devicesو full_disk):
             mount_device(src=device_path, dest=path)
             usage = shutil.disk_usage(path)
             free_space = usage.free
-            if full_disk.lower() == "true" and free_space > max_free_space and usage.total == free_space:
-                max_free_space = free_space
-                device_with_most_space = device
-            elif full_disk.lower() != "true" free_space > max_free_space:
+            total_space = usage.total
+            if total_space == free_space:
+                if not flag_first_valid_data and free_space >= size:
+                    min_free_space = free_space
+                    flag_first_valid_data = true
+                    device_with_most_space = device
+                elif flag_first_valid_data and free_space < min_free_space and free_space >= size:
+                    min_free_space = 0
+                    device_with_most_space = device
+            umount_device(dest=path)
+        except FileNotFoundError:
+            logger.warning(f"Device {device_path} not found or inaccessible.")
+        except Exception as e:
+            logger.error(f"Error checking free space for device {device_path}: {e}")
+
+    if device_with_most_space is None:
+        logger.error("No valid devices found with free space.")
+        return ""
+    return device_with_most_space
+
+def get_device_with_most_free_space(devices):
+    max_free_space = 0
+    device_with_most_space = None
+    
+    for device in devices:
+        device_path = f"/dev/{device}"
+        try:
+            path = f"{MOUNT_DEST}/{device}"
+            mount_device(src=device_path, dest=path)
+            usage = shutil.disk_usage(path)
+            free_space = usage.free
+            if full_disk.lower() != "true" free_space > max_free_space:
                 max_free_space = free_space
                 device_with_most_space = device
             umount_device(dest=path)
