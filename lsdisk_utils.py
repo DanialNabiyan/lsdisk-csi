@@ -26,7 +26,10 @@ def find_disk(storage_model):
 
 
 def find_RAID_disks(storage_model, disk_type):
-    disk_type_number = if disk_type == "HDD" else 0
+    if disk_type == "HDD":
+        disk_type_number = 1
+    else:
+        disk_type_number = 0
     output = run_out("lsblk -o MODEL,NAME,ROTA -d").stdout.decode()
     lines = output.strip().split("\n")[1:]
     result = {}
@@ -78,7 +81,7 @@ def get_full_free_spaces(devices, size):
 def get_device_with_most_free_space(devices):
     max_free_space = 0
     device_with_most_space = None
-    
+
     for device in devices:
         device_path = f"/dev/{device}"
         try:
