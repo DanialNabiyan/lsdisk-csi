@@ -88,10 +88,17 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         MIN_SIZE = 16 * 1024 * 1024  # 16MiB
         size = max(MIN_SIZE, request.capacity_range.required_bytes)
         storage_model = parameters.get("storagemodel", "")
+        disk_type = parameters.get("disk_type", "")
+        full_disk = parameters.get("full_disk", "").lower()
         logger.info(f"Storage model: {storage_model}")
+        logger.info(f"Disk_type: {disk_type}")
+        logger.info(f"Full_disk: {full_disk}")
 
         # Find and select disk
-        disks = find_disk(storage_model)
+        if storage_model.startswith("LOGICAL"):
+            disks = find_RAID_disks(storage_model, disk_type, full_disk)
+        else:
+            disks = find_disk(storage_model, full_disk)
         disk = (
             get_device_with_most_free_space(disks)
             if len(disks) > 1

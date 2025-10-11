@@ -9,7 +9,7 @@ from constance.config import MOUNT_DEST, IMAGE_NAME
 logger = get_logger(__name__)
 
 
-def find_disk(storage_model):
+def find_disk(storage_model, full_disk):
     output = run_out("lsblk -o MODEL,NAME -d").stdout.decode()
     lines = output.strip().split("\n")[1:]
     result = {}
@@ -22,6 +22,26 @@ def find_disk(storage_model):
         if model not in result:
             result[model] = []
         result[model].append(device_name)
+    return result.get(storage_model, [])
+
+
+def find_RAID_disks(storage_model, disk_type, full_disk):
+    disk_type_number = if disk_type == "HDD" else 0
+    output = run_out("lsblk -o MODEL,NAME,ROTA -d").stdout.decode()
+    lines = output.strip().split("\n")[1:]
+    result = {}
+    for line in lines:
+        parts = line.strip().split(None, 2)
+        if len(parts) < 3:
+            continue
+        model = parts[0]
+        device_name = parts[1]
+        dtype = parts[2]
+        if model not in result:
+            result[model] = []
+        
+        if dtype == disk_type_number:
+            result[model].append(device_name)
     return result.get(storage_model, [])
 
 
