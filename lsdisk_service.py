@@ -183,6 +183,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         disk_type = parameters.get("disk_type", "")
         full_disk = parameters.get("full_disk", "")
 
+        MIN_SIZE = 16 * 1024 * 1024  # 16MiB
+        size = max(MIN_SIZE, request.capacity_range.required_bytes)
+
         if storage_model.startswith("LOGICAL"):
             disks = find_RAID_disks(storage_model, disk_type)
         else:
