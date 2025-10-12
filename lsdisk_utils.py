@@ -40,9 +40,11 @@ def find_RAID_disks(storage_model, disk_type):
         model = parts[0]
         device_name = parts[1]
         dtype = parts[2]
+        logger.info(f"Model: {model}, Device: {device_name}, Type: {dtype}, DiskTypeNumber: {disk_type_number}")
         if model not in result:
             result[model] = []        
         if dtype == disk_type_number:
+            logger.info(f"Appending device {device_name} of model {model}")
             result[model].append(device_name)
     return result.get(storage_model, [])
 
@@ -60,11 +62,14 @@ def get_full_free_spaces(devices, size):
             free_space = usage.free
             total_space = usage.total
             if total_space == free_space:
+                logger.warning(f"Device {device_path} is completely free.")
                 if not flag_first_valid_data and free_space >= size:
+                    logger.info(f"Device {device_path} has enough free space: {free_space} bytes.")
                     min_free_space = free_space
                     flag_first_valid_data = True
                     device_with_most_space = device
                 elif flag_first_valid_data and free_space < min_free_space and free_space >= size:
+                    logger.info(f"Device {device_path} has more suitable free space: {free_space} bytes.")
                     min_free_space = free_space
                     device_with_most_space = device
             umount_device(dest=path)
