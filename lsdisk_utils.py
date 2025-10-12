@@ -65,7 +65,7 @@ def get_full_free_spaces(devices, size):
                     flag_first_valid_data = True
                     device_with_most_space = device
                 elif flag_first_valid_data and free_space < min_free_space and free_space >= size:
-                    min_free_space = 0
+                    min_free_space = free_space
                     device_with_most_space = device
             umount_device(dest=path)
         except FileNotFoundError:
@@ -89,7 +89,7 @@ def get_device_with_most_free_space(devices):
             mount_device(src=device_path, dest=path)
             usage = shutil.disk_usage(path)
             free_space = usage.free
-            if full_disk.lower() != "true" and free_space > max_free_space:
+            if free_space > max_free_space:
                 max_free_space = free_space
                 device_with_most_space = device
             umount_device(dest=path)
