@@ -61,6 +61,7 @@ def get_full_free_spaces(devices, size):
             usage = shutil.disk_usage(path)
             free_space = usage.free
             total_space = usage.total
+            logger.info(f"Device {device_path} - Total: {total_space}, Free: {free_space}")
             if total_space == free_space:
                 logger.warning(f"Device {device_path} is completely free.")
                 if not flag_first_valid_data and free_space >= size:
