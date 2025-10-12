@@ -34,7 +34,7 @@ def find_RAID_disks(storage_model, disk_type):
     lines = output.strip().split("\n")[1:]
     result = {}
     for line in lines:
-        parts = line.strip().split(None, 2)
+        parts = line.strip().rsplit(None, 2)
         if len(parts) < 3:
             continue
         model = parts[0]
