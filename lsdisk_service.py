@@ -21,6 +21,8 @@ from utils import (
     get_node_from_pv,
     get_storageclass_from_pv,
     get_storageclass_storagemodel_param,
+    get_storageclass_disktype_param,
+    get_storageclass_fulldisk_param,
     get_node_name,
     be_absent,
     run,
@@ -152,7 +154,17 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
-        disks = find_disk(storage_model=storagemodel)
+        disktype = get_storageclass_disktype_param(
+            storageclass_name=storageclass
+        )
+        fulldisk = get_storageclass_fulldisk_param(
+            storageclass_name=storageclass
+        )
+
+        if storagemodel.startswith("LOGICAL"):
+            disks = find_RAID_disks(storage_model=storagemodel, disk_type=disktype)
+        else:
+            disks = find_disk(storage_model=storagemodel)
 
         for disk in disks:
             path = f"{MOUNT_DEST}/{storagemodel}-{request.volume_id}"
@@ -168,13 +180,23 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
     def GetCapacity(self, request, context):
         parameters = request.parameters
         storage_model = parameters.get("storagemodel", "")
-        disks = find_disk(storage_model)
+        disk_type = parameters.get("disk_type", "")
+        full_disk = parameters.get("full_disk", "")
 
-        disk = (
-            get_device_with_most_free_space(disks)
-            if len(disks) > 1
-            else disks[0] if disks else ""
-        )
+        if storage_model.startswith("LOGICAL"):
+            disks = find_RAID_disks(storage_model, disk_type)
+        else:
+            disks = find_disk(storage_model)
+
+        if full_disk.lower() == "true":
+            disk = (
+                get_full_free_spaces(disks, size)
+            )
+        else:
+            disk = (
+                 get_device_with_most_free_space(disks)
+            )
+
         if disk:
             path = f"{MOUNT_DEST}/{disk}"
             mount_device(src=f"/dev/{disk}", dest=path)
@@ -203,8 +225,16 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
+        disktype = get_storageclass_disktype_param(
+            storageclass_name=storageclass
+        )
+        fulldisk = get_storageclass_fulldisk_param(
+            storageclass_name=storageclass
+        )
         env_vars = {
             "STORAGE_MODEL": storagemodel,
+            "DISK_TYPE": disktype,
+            "FULL_DISK": fulldisk,
             "VOLUME_ID": request.volume_id,
             "CAPACITY_RANGE": request.capacity_range.required_bytes,
             "MOUNT_DEST": MOUNT_DEST,
@@ -267,7 +297,17 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
-        disks = find_disk(storage_model=storagemodel)
+        disktype = get_storageclass_disktype_param(
+            storageclass_name=storageclass
+        )
+        fulldisk = get_storageclass_fulldisk_param(
+            storageclass_name=storageclass
+        )
+        if storagemodel.startswith("LOGICAL"):
+            disks = find_RAID_disks(storage_model=storagemodel, disk_type=disktype)
+        else:
+            disks = find_disk(storage_model=storagemodel)
+
         staging_target_path = request.staging_target_path
         path = f"{MOUNT_DEST}/{storagemodel}-{request.volume_id}"
         img_file = Path(f"{path}/{request.volume_id}/{IMAGE_NAME}")
@@ -289,6 +329,12 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             storagemodel = get_storageclass_storagemodel_param(
                 storageclass_name=storageclass
             )
+            disktype = get_storageclass_disktype_param(
+            storageclass_name=storageclass
+            )
+            fulldisk = get_storageclass_fulldisk_param(
+                storageclass_name=storageclass
+            )
         except ApiException as e:
             if e.status == 404:
                 logger.warning(
@@ -300,7 +346,12 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         staging_path = request.staging_target_path
         umount_device(staging_path)
         be_absent(staging_path)
-        disks = find_disk(storage_model=storagemodel)
+
+        if storage_model.startswith("LOGICAL"):
+            disks = find_RAID_disks(storage_model=storagemodel, disk_type=disktype)
+        else:
+            disks = find_disk(storage_model=storagemodel)
+
         for disk in disks:
             mount_device(src=f"/dev/{disk}", dest=path)
             isfile_exist = img_file.is_file()
