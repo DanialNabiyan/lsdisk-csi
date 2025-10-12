@@ -14,6 +14,8 @@ from lsdisk_utils import (
     detach_loops,
     mount_bind,
     find_loop_from_path,
+    find_RAID_disks,
+    get_full_free_spaces
 )
 from utils import (
     get_node_from_pv,
