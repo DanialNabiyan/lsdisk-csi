@@ -183,22 +183,15 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         disk_type = parameters.get("disk_type", "")
         full_disk = parameters.get("full_disk", "")
 
-        MIN_SIZE = 16 * 1024 * 1024  # 16MiB
-        size = max(MIN_SIZE, request.capacity_range.required_bytes)
 
         if storage_model.startswith("LOGICAL"):
             disks = find_RAID_disks(storage_model, disk_type)
         else:
             disks = find_disk(storage_model)
 
-        if full_disk.lower() == "true":
-            disk = (
-                get_full_free_spaces(disks, size)
-            )
-        else:
-            disk = (
-                 get_device_with_most_free_space(disks)
-            )
+        disk = (
+            get_device_with_most_free_space(disks)
+        )
 
         if disk:
             path = f"{MOUNT_DEST}/{disk}"
