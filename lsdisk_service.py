@@ -117,7 +117,7 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             )
 
         logger.info(f"Selected disk: {disk}")
-        path = Path(f"{MOUNT_DEST}/{storage_model}-{request.name}")
+        path = Path(f"{MOUNT_DEST}/{str(storage_model).replace(" ","")}-{request.name}")
 
         # Create and mount volume
         mount_device(src=f"/dev/{disk}", dest=path)
@@ -157,9 +157,6 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         disktype = get_storageclass_disktype_param(
             storageclass_name=storageclass
         )
-        fulldisk = get_storageclass_fulldisk_param(
-            storageclass_name=storageclass
-        )
 
         if storagemodel.startswith("LOGICAL"):
             disks = find_RAID_disks(storage_model=storagemodel, disk_type=disktype)
@@ -167,9 +164,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             disks = find_disk(storage_model=storagemodel)
 
         for disk in disks:
-            path = f"{MOUNT_DEST}/{storagemodel}-{request.volume_id}"
+            path = f"{MOUNT_DEST}/{storagemodel.replace(" ","")}-{request.volume_id}"
             mount_device(src=f"/dev/{disk}", dest=path)
-            is_deleted = be_absent(f"{MOUNT_DEST}/{storagemodel}-{request.volume_id}/{request.volume_id}")
+            is_deleted = be_absent(f"{path}/{request.volume_id}")
             umount_device(path)
             if is_deleted:
                 logger.info(f"Image file {request.volume_id} deleted")
@@ -181,8 +178,6 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         parameters = request.parameters
         storage_model = parameters.get("storagemodel", "")
         disk_type = parameters.get("disk_type", "")
-        full_disk = parameters.get("full_disk", "")
-
 
         if storage_model.startswith("LOGICAL"):
             disks = find_RAID_disks(storage_model, disk_type)
@@ -230,7 +225,6 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         env_vars = {
             "STORAGE_MODEL": storagemodel,
             "DISK_TYPE": disktype,
-            "FULL_DISK": fulldisk,
             "VOLUME_ID": request.volume_id,
             "CAPACITY_RANGE": request.capacity_range.required_bytes,
             "MOUNT_DEST": MOUNT_DEST,
@@ -305,7 +299,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             disks = find_disk(storage_model=storagemodel)
 
         staging_target_path = request.staging_target_path
-        path = f"{MOUNT_DEST}/{storagemodel}-{request.volume_id}"
+        path = f"{MOUNT_DEST}/{storagemodel.replace(" ","")}-{request.volume_id}"
         img_file = Path(f"{path}/{request.volume_id}/{IMAGE_NAME}")
         for disk in disks:
             mount_device(src=f"/dev/{disk}", dest=path)
@@ -326,9 +320,6 @@ class NodeService(csi_pb2_grpc.NodeServicer):
                 storageclass_name=storageclass
             )
             disktype = get_storageclass_disktype_param(
-            storageclass_name=storageclass
-            )
-            fulldisk = get_storageclass_fulldisk_param(
                 storageclass_name=storageclass
             )
         except ApiException as e:
@@ -337,13 +328,13 @@ class NodeService(csi_pb2_grpc.NodeServicer):
                     f"PV {request.volume_id} not found. Assuming it was already deleted. Returning success."
                 )
                 return csi_pb2.NodeUnstageVolumeResponse()
-        path = f"{MOUNT_DEST}/{storagemodel}-{request.volume_id}"
+        path = f"{MOUNT_DEST}/{storagemodel.replace(" ","")}-{request.volume_id}"
         img_file = Path(f"{path}/{request.volume_id}/{IMAGE_NAME}")
         staging_path = request.staging_target_path
         umount_device(staging_path)
         be_absent(staging_path)
 
-        if storage_model.startswith("LOGICAL"):
+        if storagemodel.startswith("LOGICAL"):
             disks = find_RAID_disks(storage_model=storagemodel, disk_type=disktype)
         else:
             disks = find_disk(storage_model=storagemodel)

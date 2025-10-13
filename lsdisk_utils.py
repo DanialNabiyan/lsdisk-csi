@@ -40,11 +40,11 @@ def find_RAID_disks(storage_model, disk_type):
         model = parts[0]
         device_name = parts[1]
         dtype = parts[2]
-        logger.info(f"Model: {model}, Device: {device_name}, Type: {dtype}, DiskTypeNumber: {disk_type_number}")
+        #logger.info(f"Model: {model}, Device: {device_name}, Type: {dtype}, DiskTypeNumber: {disk_type_number}")
         if model not in result:
             result[model] = []        
         if int(dtype) == int(disk_type_number):
-            logger.info(f"Appending device {device_name} of model {model}")
+            #logger.info(f"Appending device {device_name} of model {model}")
             result[model].append(device_name)
     return result.get(storage_model, [])
 
@@ -90,7 +90,7 @@ def get_device_with_most_free_space(devices):
 
     for device in devices:
         device_path = f"/dev/{device}"
-        logger.info(f"disk {device} is selected for check !")
+        #logger.info(f"disk {device} is selected for check !")
         try:
             path = f"{MOUNT_DEST}/{device}"
             mount_device(src=device_path, dest=path)
@@ -99,7 +99,7 @@ def get_device_with_most_free_space(devices):
             if free_space > max_free_space:               
                 max_free_space = free_space
                 device_with_most_space = device
-                logger.info(f"disk {device_with_most_space} is now set for max and max size is {max_free_space}")
+                #logger.info(f"disk {device_with_most_space} is now set for max and max size is {max_free_space}")
             umount_device(dest=path)
         except FileNotFoundError:
             logger.warning(f"Device {device_path} not found or inaccessible.")
@@ -108,7 +108,7 @@ def get_device_with_most_free_space(devices):
     if device_with_most_space is None:
         logger.error("No valid devices found with free space.")
         return ""
-    logger.info(f"device with most free space is {device_with_most_space}")
+    #logger.info(f"device with most free space is {device_with_most_space}")
     return device_with_most_space
 
 
@@ -138,6 +138,7 @@ def find_fstype(src):
 
 def mount_device(src, dest):
     src = Path(src)
+    dest = str(dest).replace(" ", "")
     dest = Path(dest)
     if not dest.exists():
         dest.mkdir(exist_ok=True)
@@ -155,6 +156,7 @@ def mount_device(src, dest):
 
 def mount_bind(src, dest):
     src = Path(src)
+    dest = str(dest).replace(" ", "")
     dest = Path(dest)
     if src.exists():
         dest.mkdir(parents=True, exist_ok=True)

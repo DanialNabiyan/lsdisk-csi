@@ -44,7 +44,7 @@ def get_storageclass_storagemodel_param(storageclass_name):
     storage_class = api_instance.read_storage_class(storageclass_name)
     storage_class = Munch.fromDict(storage_class)
     storage_model = storage_class.parameters["storagemodel"]
-    return storage_model
+    return str(storage_model).replace(" ", "")
 
 def get_storageclass_disktype_param(storageclass_name):
     api_instance = client.StorageV1Api()
