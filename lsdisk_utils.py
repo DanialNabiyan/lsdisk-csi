@@ -109,6 +109,7 @@ def get_device_with_most_free_space(devices):
     if device_with_most_space is None:
         logger.error("No valid devices found with free space.")
         return ""
+    logger.info(f"device with most free space is {device_with_most_space}")
     return device_with_most_space
 
 
