@@ -97,10 +97,10 @@ def get_device_with_most_free_space(devices):
             usage = shutil.disk_usage(path)
             free_space = usage.free
             logger.info(f"disk {device} have {free_space} free and max free space is {max_free_space}")
-            if free_space > max_free_space:
-                logger.info(f"disk {device} is now set for max")
+            if free_space > max_free_space:               
                 max_free_space = free_space
                 device_with_most_space = device
+                logger.info(f"disk {device_with_most_space} is now set for max and max size is {max_free_space}")
             umount_device(dest=path)
         except FileNotFoundError:
             logger.warning(f"Device {device_path} not found or inaccessible.")
