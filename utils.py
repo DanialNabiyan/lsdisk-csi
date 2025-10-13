@@ -50,7 +50,6 @@ def get_storageclass_disktype_param(storageclass_name):
     api_instance = client.StorageV1Api()
     storage_class = api_instance.read_storage_class(storageclass_name)
     storage_class = Munch.fromDict(storage_class)
-    logger.info(storage_class.parameters)
     storage_model = storage_class.parameters["disk_type"]
     return storage_model
 

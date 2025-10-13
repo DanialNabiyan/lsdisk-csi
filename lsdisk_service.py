@@ -154,11 +154,11 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
-        disktype = get_storageclass_disktype_param(
-            storageclass_name=storageclass
-        )
 
         if storagemodel.startswith("LOGICAL"):
+            disktype = get_storageclass_disktype_param(
+                storageclass_name=storageclass
+            )
             disks = find_RAID_disks(storage_model=storagemodel, disk_type=disktype)
         else:
             disks = find_disk(storage_model=storagemodel)
@@ -216,12 +216,13 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
-        disktype = get_storageclass_disktype_param(
-            storageclass_name=storageclass
-        )
-        fulldisk = get_storageclass_fulldisk_param(
-            storageclass_name=storageclass
-        )
+        if storagemodel.startswith("LOGICAL"):
+            disktype = get_storageclass_disktype_param(
+                storageclass_name=storageclass
+            )
+        else:
+            disktype = ""
+            
         env_vars = {
             "STORAGE_MODEL": storagemodel,
             "DISK_TYPE": disktype,
@@ -290,10 +291,10 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         disktype = get_storageclass_disktype_param(
             storageclass_name=storageclass
         )
-        fulldisk = get_storageclass_fulldisk_param(
-            storageclass_name=storageclass
-        )
         if storagemodel.startswith("LOGICAL"):
+            disktype = get_storageclass_disktype_param(
+                storageclass_name=storageclass
+            )
             disks = find_RAID_disks(storage_model=storagemodel, disk_type=disktype)
         else:
             disks = find_disk(storage_model=storagemodel)
@@ -318,10 +319,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             storageclass = get_storageclass_from_pv(request.volume_id)
             storagemodel = get_storageclass_storagemodel_param(
                 storageclass_name=storageclass
-            )
-            disktype = get_storageclass_disktype_param(
-                storageclass_name=storageclass
-            )
+            )            
         except ApiException as e:
             if e.status == 404:
                 logger.warning(
@@ -335,6 +333,9 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         be_absent(staging_path)
 
         if storagemodel.startswith("LOGICAL"):
+            disktype = get_storageclass_disktype_param(
+                storageclass_name=storageclass
+            )
             disks = find_RAID_disks(storage_model=storagemodel, disk_type=disktype)
         else:
             disks = find_disk(storage_model=storagemodel)
