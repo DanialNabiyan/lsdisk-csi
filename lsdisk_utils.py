@@ -90,12 +90,15 @@ def get_device_with_most_free_space(devices):
 
     for device in devices:
         device_path = f"/dev/{device}"
+        logger.info(f"disk {device} is selected for check !")
         try:
             path = f"{MOUNT_DEST}/{device}"
             mount_device(src=device_path, dest=path)
             usage = shutil.disk_usage(path)
             free_space = usage.free
+            logger.info(f"disk {device} have {free_space} free and max free space is {max_free_space}")
             if free_space > max_free_space:
+                logger.info(f"disk {device} is now set for max")
                 max_free_space = free_space
                 device_with_most_space = device
             umount_device(dest=path)
