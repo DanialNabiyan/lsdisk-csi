@@ -154,7 +154,6 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
-        logger.info(f"Storage model for deletion: {storagemodel}")
         if storagemodel.startswith("LOGICAL"):
             disktype = get_storageclass_disktype_param(
                 storageclass_name=storageclass
@@ -163,11 +162,9 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             disks = find_RAID_disks(storage_model=storagemodel, disk_type=disktype)
         else:
             disks = find_disk(storage_model=storagemodel)
-        logger.info(f"Disks found for deletion: {disks}")
         for disk in disks:
             path = f"{MOUNT_DEST}/{storagemodel.replace(" ","")}-{request.volume_id}"
             mount_device(src=f"/dev/{disk}", dest=path)
-            logger.info(f"Mounted {disk} to {path} for deletion")
             is_deleted = be_absent(f"{path}/{request.volume_id}")
             umount_device(path)
             if is_deleted:
@@ -306,10 +303,8 @@ class NodeService(csi_pb2_grpc.NodeServicer):
         img_file = Path(f"{path}/{request.volume_id}/{IMAGE_NAME}")        
         for disk in disks:
             mount_device(src=f"/dev/{disk}", dest=path)
-            logger.info(f"img file {img_file} is exist: {img_file.exists()} and is_file: {img_file.is_file()}")
             if img_file.is_file():
                 loop_file = attach_loop(img_file)
-                logger.info(f"loop is {loop_file} try to mount with {staging_target_path}")
                 mount_device(src=loop_file, dest=staging_target_path)
                 umount_device(path)
                 break
