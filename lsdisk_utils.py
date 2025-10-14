@@ -7,7 +7,7 @@ from logger import get_logger
 from constance.config import MOUNT_DEST, IMAGE_NAME
 
 logger = get_logger(__name__)
-
+    
 
 def find_disk(storage_model):
     output = run_out("lsblk -o MODEL,NAME -d").stdout.decode()
@@ -25,6 +25,63 @@ def find_disk(storage_model):
     return result.get(storage_model, [])
 
 
+def find_RAID_disks(storage_model, disk_type):
+    if disk_type == "HDD":
+        disk_type_number = 1
+    else:
+        disk_type_number = 0
+    output = run_out("lsblk -o MODEL,NAME,ROTA -d").stdout.decode()
+    lines = output.strip().split("\n")[1:]
+    result = {}
+    for line in lines:
+        parts = line.strip().rsplit(None, 2)
+        if len(parts) < 3:
+            continue
+        model = parts[0]
+        device_name = parts[1]
+        dtype = parts[2]
+        if model not in result:
+            result[model] = []        
+        if int(dtype) == int(disk_type_number):
+            result[model].append(device_name)
+    return result.get(storage_model, [])
+
+def get_full_free_spaces(devices, size):
+    flag_first_valid_data = False
+    min_free_space = 0
+    device_with_most_space = None
+
+    for device in devices:
+        device_path = f"/dev/{device}"
+        try:
+            path = f"{MOUNT_DEST}/{device}"
+            mount_device(src=device_path, dest=path)
+            usage = shutil.disk_usage(path)
+            free_space = usage.free
+            total_space = usage.total
+            used_space = usage.used
+            MIN_SIZE = 16 * 1024 * 1024  # 16MiB 
+            logger.info(f"Device: {device_path}, Total: {total_space}, Used: {used_space}, Free: {free_space}, size needed: {size}")        
+            if used_space < MIN_SIZE:
+                logger.info(f"Device: {device_path} is almost empty, selecting it.")
+                if not flag_first_valid_data and free_space >= size:
+                    min_free_space = free_space
+                    flag_first_valid_data = True
+                    device_with_most_space = device
+                elif flag_first_valid_data and free_space < min_free_space and free_space >= size:
+                    min_free_space = free_space
+                    device_with_most_space = device
+            umount_device(dest=path)
+        except FileNotFoundError:
+            logger.warning(f"Device {device_path} not found or inaccessible.")
+        except Exception as e:
+            logger.error(f"Error checking free space for device {device_path}: {e}")
+
+    if device_with_most_space is None:
+        logger.error("No valid devices found with free space.")
+        return ""
+    return device_with_most_space
+
 def get_device_with_most_free_space(devices):
     max_free_space = 0
     device_with_most_space = None
@@ -36,7 +93,7 @@ def get_device_with_most_free_space(devices):
             mount_device(src=device_path, dest=path)
             usage = shutil.disk_usage(path)
             free_space = usage.free
-            if free_space > max_free_space:
+            if free_space > max_free_space:               
                 max_free_space = free_space
                 device_with_most_space = device
             umount_device(dest=path)
@@ -44,7 +101,9 @@ def get_device_with_most_free_space(devices):
             logger.warning(f"Device {device_path} not found or inaccessible.")
         except Exception as e:
             logger.error(f"Error checking free space for device {device_path}: {e}")
-
+    if device_with_most_space is None:
+        logger.error("No valid devices found with free space.")
+        return ""
     return device_with_most_space
 
 
@@ -74,6 +133,7 @@ def find_fstype(src):
 
 def mount_device(src, dest):
     src = Path(src)
+    dest = str(dest).replace(" ", "")
     dest = Path(dest)
     if not dest.exists():
         dest.mkdir(exist_ok=True)
@@ -83,7 +143,7 @@ def mount_device(src, dest):
             if fs_type in ["xfs", "ext4"]:
                 run(f"mount {src} {dest}")
             elif fs_type == "":
-                run(f"mkfs.xfs -f {src}")
+                run(f"mkfs.ext4 -F {src}")
                 run(f"mount {src} {dest}")
             else:
                 raise TypeError("Only FsType xfs and ext4 valid!")
@@ -91,6 +151,7 @@ def mount_device(src, dest):
 
 def mount_bind(src, dest):
     src = Path(src)
+    dest = str(dest).replace(" ", "")
     dest = Path(dest)
     if src.exists():
         dest.mkdir(parents=True, exist_ok=True)
