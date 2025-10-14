@@ -60,8 +60,10 @@ def get_full_free_spaces(devices, size):
             free_space = usage.free
             total_space = usage.total
             used_space = usage.used
-            MIN_SIZE = 16 * 1024 * 1024  # 16MiB         
+            MIN_SIZE = 16 * 1024 * 1024  # 16MiB 
+            logger.info(f"Device: {device_path}, Total: {total_space}, Used: {used_space}, Free: {free_space}, size needed: {size}")        
             if used_space < MIN_SIZE:
+                logger.info(f"Device: {device_path} is almost empty, selecting it.")
                 if not flag_first_valid_data and free_space >= size:
                     min_free_space = free_space
                     flag_first_valid_data = True
