@@ -306,6 +306,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
             mount_device(src=f"/dev/{disk}", dest=path)
             if img_file.is_file():
                 loop_file = attach_loop(img_file)
+                logger.info(f"loop is {loop_file} try to mount with {staging_target_path}")
                 mount_device(src=loop_file, dest=staging_target_path)
                 umount_device(path)
                 break
