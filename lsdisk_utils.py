@@ -40,11 +40,11 @@ def find_RAID_disks(storage_model, disk_type):
         model = parts[0]
         device_name = parts[1]
         dtype = parts[2]
-        #logger.info(f"Model: {model}, Device: {device_name}, Type: {dtype}, DiskTypeNumber: {disk_type_number}")
+        logger.info(f"Model: {model}, Device: {device_name}, Type: {dtype}, DiskTypeNumber: {disk_type_number}")
         if model not in result:
             result[model] = []        
         if int(dtype) == int(disk_type_number):
-            #logger.info(f"Appending device {device_name} of model {model}")
+            logger.info(f"Appending device {device_name} of model {model}")
             result[model].append(device_name)
     return result.get(storage_model, [])
 

@@ -154,18 +154,20 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
         storagemodel = get_storageclass_storagemodel_param(
             storageclass_name=storageclass
         )
-
+        logger.info(f"Storage model for deletion: {storagemodel}")
         if storagemodel.startswith("LOGICAL"):
             disktype = get_storageclass_disktype_param(
                 storageclass_name=storageclass
             )
+            logger.info(f"Disk type for deletion: {disktype}")
             disks = find_RAID_disks(storage_model=storagemodel, disk_type=disktype)
         else:
             disks = find_disk(storage_model=storagemodel)
-
+        logger.info(f"Disks found for deletion: {disks}")
         for disk in disks:
             path = f"{MOUNT_DEST}/{storagemodel.replace(" ","")}-{request.volume_id}"
             mount_device(src=f"/dev/{disk}", dest=path)
+            logger.info(f"Mounted {disk} to {path} for deletion")
             is_deleted = be_absent(f"{path}/{request.volume_id}")
             umount_device(path)
             if is_deleted:
