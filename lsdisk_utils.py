@@ -61,8 +61,11 @@ def get_full_free_spaces(devices, size):
             usage = shutil.disk_usage(path)
             free_space = usage.free
             total_space = usage.total
-            logger.info(f"Device {device_path} - Total: {total_space}, Free: {free_space}")
-            if total_space == free_space:
+            used_space = usage.used
+            MIN_SIZE = 16 * 1024 * 1024  # 16MiB
+            logger.info(f"Device {device_path} - Total: {total_space}, Free: {free_space}, Used: {used_space}")
+            
+            if used_space < MIN_SIZE:
                 logger.warning(f"Device {device_path} is completely free.")
                 if not flag_first_valid_data and free_space >= size:
                     logger.info(f"Device {device_path} has enough free space: {free_space} bytes.")
@@ -148,7 +151,7 @@ def mount_device(src, dest):
             if fs_type in ["xfs", "ext4"]:
                 run(f"mount {src} {dest}")
             elif fs_type == "":
-                run(f"mkfs.xfs -f {src}")
+                run(f"mkfs.ext4 -f {src}")
                 run(f"mount {src} {dest}")
             else:
                 raise TypeError("Only FsType xfs and ext4 valid!")
