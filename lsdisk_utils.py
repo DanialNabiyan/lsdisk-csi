@@ -19,10 +19,27 @@ def find_disk(storage_model):
             continue
         model = parts[0]
         device_name = parts[1]
+        if not is_disk_safe_to_use(device_name):
+            continue   
         if model not in result:
             result[model] = []
         result[model].append(device_name)
     return result.get(storage_model, [])
+
+
+def is_disk_safe_to_use(device_name):
+    partition_check = run_out(f"lsblk -o NAME -n /dev/{device_name}").stdout.decode()
+    partition_lines = partition_check.strip().split("\n")
+    if len(partition_lines) > 1:
+        logger.info(f"Skipping {device_name}: has partitions")
+        return False
+    
+    pv_check = run_out(f"pvs --noheadings -o pv_name 2>/dev/null | grep -w /dev/{device_name}").returncode
+    if pv_check == 0:
+        logger.info(f"Skipping {device_name}: is an LVM physical volume")
+        return False
+    
+    return True
 
 
 def find_RAID_disks(storage_model, disk_type):
@@ -40,6 +57,8 @@ def find_RAID_disks(storage_model, disk_type):
         model = parts[0]
         device_name = parts[1]
         dtype = parts[2]
+        if not is_disk_safe_to_use(device_name):
+            continue        
         if model not in result:
             result[model] = []        
         if int(dtype) == int(disk_type_number):
@@ -102,7 +121,6 @@ def get_device_with_most_free_space(devices):
         except Exception as e:
             logger.error(f"Error checking free space for device {device_path}: {e}")
     if device_with_most_space is None:
-        logger.error("No valid devices found with free space.")
         return ""
     return device_with_most_space
 
