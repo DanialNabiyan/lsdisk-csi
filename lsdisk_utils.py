@@ -161,6 +161,7 @@ def mount_device(src, dest):
             if fs_type in ["xfs", "ext4"]:
                 run(f"mount {src} {dest}")
             elif fs_type == "":
+                logger.info(f"disk {src} format to ext4!")
                 run(f"mkfs.ext4 -F {src}")
                 run(f"mount {src} {dest}")
             else:
@@ -206,8 +207,7 @@ def attach_loop(file_path: str) -> str:
         return existing[0]
 
     # Attach new loop device
-    print("Attach new loop device")
-    res = run_out(f"losetup -f --direct-io=on {file_path}")
+    res = run_out(f"losetup -f --show --direct-io=on {file_path}")
     if res.returncode == 0:
         return res.stdout.decode().strip()
 
@@ -218,7 +218,6 @@ def attached_loops_dev(file: str) -> [str]:
     out = run_out(f"losetup -j {file}").stdout.decode()
     lines = out.splitlines()
     devs = [line.split(":", 1)[0] for line in lines]
-    print(f"devs: {devs}")
     return devs
 
 
