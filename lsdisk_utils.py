@@ -216,7 +216,7 @@ def attach_loop(file_path: str) -> str:
 
 def attached_loops_dev(file: str) -> [str]:
     out = run_out(f"losetup -j {file}").stdout.decode()
-    lines = out.splitlines()ا
+    lines = out.splitlines()
     devs = [line.split(":", 1)[0] for line in lines]
     print(f"devs: {devs}")
     return devs
