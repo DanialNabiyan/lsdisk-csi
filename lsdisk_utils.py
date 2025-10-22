@@ -31,12 +31,10 @@ def is_disk_safe_to_use(device_name):
     partition_check = run_out(f"lsblk -o NAME -n /dev/{device_name}").stdout.decode()
     partition_lines = partition_check.strip().split("\n")
     if len(partition_lines) > 1:
-        logger.info(f"Skipping {device_name}: has partitions")
         return False
     
     pv_check = run_out(f"pvs --noheadings -o pv_name 2>/dev/null | grep -w /dev/{device_name}").returncode
     if pv_check == 0:
-        logger.info(f"Skipping {device_name}: is an LVM physical volume")
         return False
     
     return True
