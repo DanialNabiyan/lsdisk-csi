@@ -300,7 +300,7 @@ class NodeService(csi_pb2_grpc.NodeServicer):
 
         staging_target_path = request.staging_target_path
         path = f"{MOUNT_DEST}/{storagemodel.replace(" ","")}-{request.volume_id}"
-        img_file = Path(f"{path}/{request.volume_id}/{IMAGE_NAME}")        
+        img_file = Path(f"{path}/{request.volume_id}/{IMAGE_NAME}")      
         for disk in disks:
             mount_device(src=f"/dev/{disk}", dest=path)
             if img_file.is_file():

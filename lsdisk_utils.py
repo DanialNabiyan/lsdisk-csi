@@ -31,12 +31,10 @@ def is_disk_safe_to_use(device_name):
     partition_check = run_out(f"lsblk -o NAME -n /dev/{device_name}").stdout.decode()
     partition_lines = partition_check.strip().split("\n")
     if len(partition_lines) > 1:
-        logger.info(f"Skipping {device_name}: has partitions")
         return False
     
     pv_check = run_out(f"pvs --noheadings -o pv_name 2>/dev/null | grep -w /dev/{device_name}").returncode
     if pv_check == 0:
-        logger.info(f"Skipping {device_name}: is an LVM physical volume")
         return False
     
     return True
@@ -161,6 +159,7 @@ def mount_device(src, dest):
             if fs_type in ["xfs", "ext4"]:
                 run(f"mount {src} {dest}")
             elif fs_type == "":
+                logger.info(f"disk {src} format to ext4!")
                 run(f"mkfs.ext4 -F {src}")
                 run(f"mount {src} {dest}")
             else:
@@ -197,20 +196,20 @@ def expand_img(volume_id, size):
 
 
 def attach_loop(file_path: str) -> str:
-    def get_next_loop_device() -> str:
-        loop_device = run_out(f"losetup -f").stdout.decode().strip()
-        if not Path(loop_device).exists():
-            loop_id = loop_device.replace("/dev/loop", "")
-            run(f"mknod {loop_device} b 7 {loop_id}")
-        return loop_device
+    if not Path(file_path).exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
 
-    while True:
-        attached_devices = attached_loops_dev(file_path)
-        if len(attached_devices) > 0:
-            return attached_devices[0]
+    # Check if already attached
+    existing = attached_loops_dev(file_path)
+    if existing:
+        return existing[0]
 
-        get_next_loop_device()
-        run(f"losetup --direct-io=on -f {file_path}")
+    # Attach new loop device
+    res = run_out(f"losetup -f --show --direct-io=on {file_path}")
+    if res.returncode == 0:
+        return res.stdout.decode().strip()
+
+    raise RuntimeError("Failed to attach loop device")
 
 
 def attached_loops_dev(file: str) -> [str]:
