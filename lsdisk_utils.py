@@ -196,20 +196,20 @@ def expand_img(volume_id, size):
 
 
 def attach_loop(file_path: str) -> str:
-    if not Path(file_path).exists():
-        raise FileNotFoundError(f"File not found: {file_path}")
+    def get_next_loop_device() -> str:
+        loop_device = run_out(f"losetup -f").stdout.decode().strip()
+        if not Path(loop_device).exists():
+            loop_id = loop_device.replace("/dev/loop", "")
+            run(f"mknod {loop_device} b 7 {loop_id}")
+        return loop_device
 
-    # Check if already attached
-    existing = attached_loops_dev(file_path)
-    if existing:
-        return existing[0]
+    while True:
+        attached_devices = attached_loops_dev(file_path)
+        if len(attached_devices) > 0:
+            return attached_devices[0]
 
-    # Attach new loop device
-    res = run_out(f"losetup -f --show --direct-io=on {file_path}")
-    if res.returncode == 0:
-        return res.stdout.decode().strip()
-
-    raise RuntimeError("Failed to attach loop device")
+        get_next_loop_device()
+        run(f"losetup --direct-io=on -f {file_path}")
 
 
 def attached_loops_dev(file: str) -> [str]:
