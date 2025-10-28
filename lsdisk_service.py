@@ -22,7 +22,6 @@ from utils import (
     get_storageclass_from_pv,
     get_storageclass_storagemodel_param,
     get_storageclass_disktype_param,
-    get_storageclass_fulldisk_param,
     get_node_name,
     be_absent,
     run,
