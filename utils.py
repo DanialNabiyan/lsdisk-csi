@@ -92,6 +92,7 @@ def run_pod(
         containers=[container],
         restart_policy="Never",
         node_selector={"kubernetes.io/hostname": node},  # Specify the node here
+        tolerations=[client.V1Toleration(operator="Exists")],  # tolerate all taints
     )
 
     metadata = client.V1ObjectMeta(name=pod_name)
