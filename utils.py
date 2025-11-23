@@ -1,4 +1,5 @@
 from asyncio import sleep
+import time
 import os
 import subprocess
 from pathlib import Path
@@ -128,7 +129,7 @@ def cleanup_pod(pod_name, namespace="default"):
     try:
         while True:
             pod_status = v1.read_namespaced_pod_status(
-                name=pod_name, namespace="default"
+                name=pod_name, namespace=namespace
             )
             phase = pod_status.status.phase
             logger.info(f"Pod {pod_name} is in phase: {phase}")
@@ -137,11 +138,14 @@ def cleanup_pod(pod_name, namespace="default"):
                 logger.info(f"Pod {pod_name} has finished with phase: {phase}")
                 break
 
-            sleep(2)
+            time.sleep(2)
 
         v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
         return True
     except client.exceptions.ApiException as e:
+        if getattr(e, "status", None) == 404:
+            logger.info(f"Pod {pod_name} not found in namespace {namespace}, nothing to clean up")
+            return True
         logger.error(f"Exception when monitoring or deleting pod: {e}")
         raise
 
