@@ -3,6 +3,17 @@ entries:
   lsdisk:
   - apiVersion: v2
     appVersion: v1.0.0
+    created: "2025-11-23T15:53:45.304398844+03:30"
+    description: A Helm chart for the lsdisk CSI driver
+    digest: 7da96c67a1e97fb47ac2646c45e8055f9026ce6df18799abe44339117c986c80
+    icon: https://raw.githubusercontent.com/danialnabiyan/lsdisk-csi/main/deploy/lsdisk/files/icon.png
+    name: lsdisk
+    type: application
+    urls:
+    - lsdisk-2.0.6.tgz
+    version: 2.0.6
+  - apiVersion: v2
+    appVersion: v1.0.0
     created: "2025-11-23T14:32:07.568715676+03:30"
     description: A Helm chart for the lsdisk CSI driver
     digest: bdfeb9d56f1530c6c27bb0b66bb40fd4256fba5b00a1cb8e95f0f9368bbf2416
@@ -23,4 +34,4 @@ entries:
     urls:
     - lsdisk-2.0.4.tgz
     version: 2.0.4
-generated: "2025-11-23T14:32:07.560519663+03:30"
+generated: "2025-11-23T15:53:45.283270896+03:30"
