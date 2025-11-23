@@ -109,6 +109,15 @@ def run_pod(
         logger.info(f"Pod {pod_name} created in namespace {namespace}")
         return response
     except client.exceptions.ApiException as e:
+        # If pod already exists, return the existing pod instead of raising
+        if getattr(e, "status", None) == 409:
+            logger.info(f"Pod {pod_name} already exists in namespace {namespace}, returning existing pod")
+            try:
+                existing = v1.read_namespaced_pod(name=pod_name, namespace=namespace)
+                return existing
+            except client.exceptions.ApiException as read_e:
+                logger.error(f"Failed to read existing pod {pod_name}: {read_e}")
+                raise
         logger.error(f"Exception when creating pod: {e}")
         raise
 
