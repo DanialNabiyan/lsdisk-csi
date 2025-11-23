@@ -28,7 +28,7 @@ from utils import (
     run_pod,
     cleanup_pod,
 )
-from constance.config import IMAGE_NAME, MOUNT_DEST, POD_IMAGE
+from constance.config import IMAGE_NAME, MOUNT_DEST, POD_IMAGE,NAMESPACE
 from pathlib import Path
 from logger import get_logger
 from kubernetes.client.exceptions import ApiException
@@ -229,15 +229,16 @@ class ControllerService(csi_pb2_grpc.ControllerServicer):
             "MOUNT_DEST": MOUNT_DEST,
             "IMAGE_NAME": IMAGE_NAME,
         }
-
+        logger.info(f"Creating pod in node {node_name} and namespace {NAMESPACE}")
         run_pod(
             pod_name=request.volume_id,
             image=POD_IMAGE,
             node=node_name,
+            namespace=NAMESPACE,
             command=["python", "/app/extend_image.py"],
             env_vars=env_vars,
         )
-        is_deleted = cleanup_pod(pod_name=request.volume_id)
+        is_deleted = cleanup_pod(pod_name=request.volume_id,namespace=NAMESPACE)
 
         if is_deleted:
             logger.info(f"Pod {request.volume_id} deleted")
