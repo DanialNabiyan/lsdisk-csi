@@ -163,7 +163,8 @@ def mount_device(src, dest):
                 run(f"mkfs.ext4 -F {src}")
                 run(f"mount {src} {dest}")
             else:
-                raise TypeError("Only FsType xfs and ext4 valid!")
+                logger.error(f"Unsupported filesystem type: {fs_type} for device {src}")
+                return False
                 
 
 def mount_bind(src, dest):
